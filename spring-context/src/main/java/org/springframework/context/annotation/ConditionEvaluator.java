@@ -89,7 +89,7 @@ class ConditionEvaluator {
 			}
 			return shouldSkip(metadata, ConfigurationPhase.REGISTER_BEAN);
 		}
-
+		// 获取@Conditional 配置的所有匹配过滤类，添加到conditions集合
 		List<Condition> conditions = new ArrayList<>();
 		for (String[] conditionClasses : getConditionClasses(metadata)) {
 			for (String conditionClass : conditionClasses) {
@@ -97,7 +97,7 @@ class ConditionEvaluator {
 				conditions.add(condition);
 			}
 		}
-
+		// 按照 @Order 注解进行排序
 		AnnotationAwareOrderComparator.sort(conditions);
 
 		for (Condition condition : conditions) {
@@ -105,6 +105,7 @@ class ConditionEvaluator {
 			if (condition instanceof ConfigurationCondition) {
 				requiredPhase = ((ConfigurationCondition) condition).getConfigurationPhase();
 			}
+			// 调用 matches 方法获取匹配结果
 			if ((requiredPhase == null || requiredPhase == phase) && !condition.matches(this.context, metadata)) {
 				return true;
 			}

@@ -6,10 +6,10 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 /**
  * @author Yuan
- * @description SpringStartDemoA
+ * @description 演示 @Conditional 注解
  * @date 2022/9/1
  */
-public class SpringStartDemoA {
+public class ConditionalDemo {
 	public static void main(String[] args) {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
 		UserService userService = context.getBean(UserService.class);

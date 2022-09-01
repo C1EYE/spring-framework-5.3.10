@@ -16,9 +16,6 @@
 
 package org.springframework.context.annotation;
 
-import java.lang.annotation.Annotation;
-import java.util.function.Supplier;
-
 import org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionCustomizer;
@@ -32,6 +29,9 @@ import org.springframework.core.env.EnvironmentCapable;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+
+import java.lang.annotation.Annotation;
+import java.util.function.Supplier;
 
 /**
  * Convenient adapter for programmatic registration of bean classes.
@@ -48,12 +48,24 @@ import org.springframework.util.Assert;
  */
 public class AnnotatedBeanDefinitionReader {
 
+	/**
+	 * bean 容器，解析得到 beanDefinition 注册到该容器内
+	 */
 	private final BeanDefinitionRegistry registry;
 
+	/**
+	 * beanName 的名称生成器
+	 */
 	private BeanNameGenerator beanNameGenerator = AnnotationBeanNameGenerator.INSTANCE;
 
+	/**
+	 * bean scope 作用域解析器
+	 */
 	private ScopeMetadataResolver scopeMetadataResolver = new AnnotationScopeMetadataResolver();
 
+	/**
+	 * Conditiona 条件注解解析器
+	 */
 	private ConditionEvaluator conditionEvaluator;
 
 
@@ -249,18 +261,23 @@ public class AnnotatedBeanDefinitionReader {
 	private <T> void doRegisterBean(Class<T> beanClass, @Nullable String name,
 			@Nullable Class<? extends Annotation>[] qualifiers, @Nullable Supplier<T> supplier,
 			@Nullable BeanDefinitionCustomizer[] customizers) {
-
+		// 将类封装成一个beanDefinition，使用AnnotatedGenericBeanDefinition更加方便解析类上的注解元数据信息
 		AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(beanClass);
+		// 解析类上是否有@Conditional注解，如果有的话调用注解配置的类进行过滤匹配
 		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) {
 			return;
 		}
-
+		// 添加Supplier接口，如果有设置这个Supplier接口到beanDefinition的话
+		// 将来创建Bean实例的时候，会先检查你是否有设置这个Supplier接口，如果有的话直接调用这个接口获取一个对象作为Bean
 		abd.setInstanceSupplier(supplier);
+		// 解析类上的scope元数据信息 默认使用 AnnotationScopeMetadataResolver 来解析
 		ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
 		abd.setScope(scopeMetadata.getScopeName());
+		// 生成 beanName 默认使用AnnotationBeanNameGenerator 来生成name
 		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));
-
+		// 解析 @Lazy @Primary @DependsOn @Role @Description 注解的属性，并设置到beanDefinition
 		AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
+		// 检查外部参数是否有传一些注解
 		if (qualifiers != null) {
 			for (Class<? extends Annotation> qualifier : qualifiers) {
 				if (Primary.class == qualifier) {
@@ -270,12 +287,15 @@ public class AnnotatedBeanDefinitionReader {
 					abd.setLazyInit(true);
 				}
 				else {
+					// 如果传入的注解不是以上两种，就将该注解放入beanDefinition的qualifiers属性Map集合
 					abd.addQualifier(new AutowireCandidateQualifier(qualifier));
 				}
 			}
 		}
+		// 如果这里有传的话，会遍历参数所有BeanDefinitionCustomizer的接口实现类
 		if (customizers != null) {
 			for (BeanDefinitionCustomizer customizer : customizers) {
+				// 把当前的 beanDefinition 传递给你回调，让你在这个节点上对beanDefinition做一些调整
 				customizer.customize(abd);
 			}
 		}

@@ -93,8 +93,14 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 
 	private String resourcePattern = DEFAULT_RESOURCE_PATTERN;
 
+	/**
+	 * 能够被注册成为bean的过滤规则集合
+	 */
 	private final List<TypeFilter> includeFilters = new ArrayList<>();
 
+	/**
+	 * 排除过滤不能成为bean的规则集合
+	 */
 	private final List<TypeFilter> excludeFilters = new ArrayList<>();
 
 	@Nullable
@@ -203,9 +209,12 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 */
 	@SuppressWarnings("unchecked")
 	protected void registerDefaultFilters() {
+		// 这里添加了一条默认的规则，就是只有被Component标注的类才能有资格成为bean
+		// 这也是为什么我们通常给class添加一个Component.class注解就能成为bean的原因
 		this.includeFilters.add(new AnnotationTypeFilter(Component.class));
 		ClassLoader cl = ClassPathScanningCandidateComponentProvider.class.getClassLoader();
 		try {
+			// 添加@ManagedBean注解支持，也就是说@ManagedBean也可以注册到容器，前提是类路径下有这个注解能够加载的到
 			this.includeFilters.add(new AnnotationTypeFilter(
 					((Class<? extends Annotation>) ClassUtils.forName("javax.annotation.ManagedBean", cl)), false));
 			logger.trace("JSR-250 'javax.annotation.ManagedBean' found and supported for component scanning");
@@ -214,6 +223,7 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 			// JSR-250 1.1 API (as included in Java EE 6) not available - simply skip.
 		}
 		try {
+			// 添加@Named注解支持，也就是说@Named也可以注册到容器，前提是类路径下有这个注解能够加载的到
 			this.includeFilters.add(new AnnotationTypeFilter(
 					((Class<? extends Annotation>) ClassUtils.forName("javax.inject.Named", cl)), false));
 			logger.trace("JSR-330 'javax.inject.Named' annotation found and supported for component scanning");

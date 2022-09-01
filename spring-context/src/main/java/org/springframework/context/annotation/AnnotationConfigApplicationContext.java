@@ -16,9 +16,6 @@
 
 package org.springframework.context.annotation;
 
-import java.util.Arrays;
-import java.util.function.Supplier;
-
 import org.springframework.beans.factory.config.BeanDefinitionCustomizer;
 import org.springframework.beans.factory.support.BeanNameGenerator;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -27,6 +24,9 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.metrics.StartupStep;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+
+import java.util.Arrays;
+import java.util.function.Supplier;
 
 /**
  * Standalone application context, accepting <em>component classes</em> as input &mdash;
@@ -65,9 +65,15 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * through {@link #register} calls and then manually {@linkplain #refresh refreshed}.
 	 */
 	public AnnotationConfigApplicationContext() {
-		StartupStep createAnnotatedBeanDefReader = this.getApplicationStartup().start("spring.context.annotated-bean-reader.create");
+		StartupStep createAnnotatedBeanDefReader = this.getApplicationStartup()
+				.start("spring.context.annotated-bean-reader.create");
+		// AnnotatedBeanDefinitionReader 主要用来将class对象解析成为beanDefinition并注册到容器
+		// 并且还会添加一些PostProcessor后置处理器
+		// 比如 AutowiredAnnotationBeanPostProcessor CommonAnnotationBeanPostProcessor
 		this.reader = new AnnotatedBeanDefinitionReader(this);
 		createAnnotatedBeanDefReader.end();
+		// ClassPathBeanDefinitionScanner  主要扫描指定的包路径下的所有类
+		// 并经过includeFilters和excludeFilters的过滤 将class对象解析成为beanDefinition并注册到容器
 		this.scanner = new ClassPathBeanDefinitionScanner(this);
 	}
 
@@ -88,8 +94,11 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * {@link Configuration @Configuration} classes
 	 */
 	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
+		// 调用本类的无参构造函数
 		this();
+		// 注册外部传进来的配置类
 		register(componentClasses);
+		// 刷新容器，完成 Bean 的扫描注册，并且初始化创建所有非懒加载的单例 Bean
 		refresh();
 	}
 
@@ -165,6 +174,8 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 		Assert.notEmpty(componentClasses, "At least one component class must be specified");
 		StartupStep registerComponentClass = this.getApplicationStartup().start("spring.context.component-classes.register")
 				.tag("classes", () -> Arrays.toString(componentClasses));
+		// 这里的reader属性就是自身无参构造创建的 AnnotatedBeanDefinitionReader 对象
+		// 所以将外部传递的配置类，最终是交给 AnnotatedBeanDefinitionReader 去注册解析的
 		this.reader.register(componentClasses);
 		registerComponentClass.end();
 	}

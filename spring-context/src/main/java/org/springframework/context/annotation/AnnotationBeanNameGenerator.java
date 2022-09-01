@@ -78,13 +78,16 @@ public class AnnotationBeanNameGenerator implements BeanNameGenerator {
 	@Override
 	public String generateBeanName(BeanDefinition definition, BeanDefinitionRegistry registry) {
 		if (definition instanceof AnnotatedBeanDefinition) {
+			// 解析 @Component 是否有指定 beanName
 			String beanName = determineBeanNameFromAnnotation((AnnotatedBeanDefinition) definition);
 			if (StringUtils.hasText(beanName)) {
-				// Explicit bean name found.
+				// 如果解析到 @Component 有指定值，直接使用 @Component 指定的
 				return beanName;
 			}
 		}
-		// Fallback: generate a unique default bean name.
+		// 反之，生成一个默认的，生成策略如下：
+		// UserService => userService
+		// ABService => ABService
 		return buildDefaultBeanName(definition, registry);
 	}
 
@@ -164,9 +167,12 @@ public class AnnotationBeanNameGenerator implements BeanNameGenerator {
 	 * @return the default bean name (never {@code null})
 	 */
 	protected String buildDefaultBeanName(BeanDefinition definition) {
+		// 获取全限定类名（包含包名）
 		String beanClassName = definition.getBeanClassName();
 		Assert.state(beanClassName != null, "No bean class name set");
+		// 去掉包名，只剩类名
 		String shortClassName = ClassUtils.getShortName(beanClassName);
+		// 调用 JDK的工具类生成 beanName
 		return Introspector.decapitalize(shortClassName);
 	}
 

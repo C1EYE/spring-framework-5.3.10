@@ -76,15 +76,24 @@ public class AnnotationScopeMetadataResolver implements ScopeMetadataResolver {
 
 	@Override
 	public ScopeMetadata resolveScopeMetadata(BeanDefinition definition) {
+		// 创建一个 ScopeMetadata 元数据信息，这个对象是有默认值的
+		// 默认 scopeName = singleton scopedProxyMode = NO
+		// 所有如果我们没有设置Scope属性的话，下面是获取不到任何属性的，最终会将这个默认的scope对象返回出去
+		// 这也是 Spring 默认单例的缘由吧
 		ScopeMetadata metadata = new ScopeMetadata();
 		if (definition instanceof AnnotatedBeanDefinition) {
 			AnnotatedBeanDefinition annDef = (AnnotatedBeanDefinition) definition;
+			// 获取类上的 scope 注解元数据信息
 			AnnotationAttributes attributes = AnnotationConfigUtils.attributesFor(
 					annDef.getMetadata(), this.scopeAnnotationType);
 			if (attributes != null) {
+				// 如果获取到了不为空，就设置注解指定的
 				metadata.setScopeName(attributes.getString("value"));
 				ScopedProxyMode proxyMode = attributes.getEnum("proxyMode");
+				// 如果你设置的ScopedProxyMode等于DEFAULT
 				if (proxyMode == ScopedProxyMode.DEFAULT) {
+					// 那么会将它修改为 NO，因为两者是等价的
+					// 这里做一个统一，主要是后面使用好判断一些
 					proxyMode = this.defaultProxyMode;
 				}
 				metadata.setScopedProxyMode(proxyMode);
