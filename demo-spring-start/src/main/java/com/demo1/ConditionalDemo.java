@@ -3,6 +3,7 @@ package com.demo1;
 import com.demo1.config.AppConfig;
 import com.demo1.service.UserService;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.ConfigurationClassPostProcessor;
 
 /**
  * @author Yuan
@@ -14,5 +15,7 @@ public class ConditionalDemo {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
 		UserService userService = context.getBean(UserService.class);
 		userService.test();
+		ConfigurationClassPostProcessor processor = new ConfigurationClassPostProcessor();
+		processor.processConfigBeanDefinitions(context);
 	}
 }
