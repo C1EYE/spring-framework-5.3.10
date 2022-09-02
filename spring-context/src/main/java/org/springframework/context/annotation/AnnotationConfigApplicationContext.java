@@ -59,6 +59,13 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 
 	private final ClassPathBeanDefinitionScanner scanner;
 
+	public AnnotatedBeanDefinitionReader getReader() {
+		return reader;
+	}
+
+	public ClassPathBeanDefinitionScanner getScanner() {
+		return scanner;
+	}
 
 	/**
 	 * Create a new AnnotationConfigApplicationContext that needs to be populated

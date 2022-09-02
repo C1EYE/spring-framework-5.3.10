@@ -301,7 +301,11 @@ public class AnnotatedBeanDefinitionReader {
 		}
 
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
+		// 如果scopeMetadata的ScopedProxyMode不是 NO的话，这里返回的是一个被替换的 beanDefinition
+		// 它的 beanClass 类型会是一个 class org.springframework.aop.scope.ScopedProxyFactoryBean
+		// 而我们原始的 beanDefinition 会作为这个代理 beanDefinition的 DecoratedDefinition属性存在
 		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
+		// 注册beanDefinition 和 别名
 		BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, this.registry);
 	}
 
