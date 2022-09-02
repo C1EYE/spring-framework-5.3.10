@@ -263,7 +263,7 @@ public class AnnotatedBeanDefinitionReader {
 			@Nullable BeanDefinitionCustomizer[] customizers) {
 		// 将类封装成一个beanDefinition，使用AnnotatedGenericBeanDefinition更加方便解析类上的注解元数据信息
 		AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(beanClass);
-		// 解析类上是否有@Conditional注解，如果有的话调用注解配置的类进行过滤匹配
+		// 解析类上是否有@Conditional注解，如果有的话调用注解配置的类进行条件判断过滤
 		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) {
 			return;
 		}
