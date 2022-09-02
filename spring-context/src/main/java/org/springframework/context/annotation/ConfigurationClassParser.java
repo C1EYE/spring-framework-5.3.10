@@ -208,17 +208,20 @@ class ConfigurationClassParser {
 		}
 
 		ConfigurationClass existingClass = this.configurationClasses.get(configClass);
+		// 判断该类是否存在，已经被解析过了，比方说多个地方注入 @Component @Bean
 		if (existingClass != null) {
+			// 判断当前解析到的配置类是否被导入的
 			if (configClass.isImported()) {
+				// 判断已经存在的配置类是否是被导入的
 				if (existingClass.isImported()) {
+					// 进行合并，将当前解析到的配置类的importedBy集合全部添加到已存在的配置的importedBy集合
 					existingClass.mergeImportedBy(configClass);
 				}
-				// Otherwise ignore new imported config class; existing non-imported class overrides it.
+				// 如果已经存在的配置类不是被导入的，那么直接忽略当前解析到的配置类不做任何操作了
 				return;
 			}
 			else {
-				// Explicit bean definition found, probably replacing an import.
-				// Let's remove the old one and go with the new one.
+				// 如果当前解析到的配置类不是被导入的，删除旧的
 				this.configurationClasses.remove(configClass);
 				this.knownSuperclasses.values().removeIf(configClass::equals);
 			}
