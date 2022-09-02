@@ -33,6 +33,7 @@ public abstract class NativeDetector {
 	/**
 	 * Returns {@code true} if invoked in the context of image building or during image runtime, else {@code false}.
 	 */
+	// 判断当前虚拟机环境是不是 GraalVM
 	public static boolean inNativeImage() {
 		return imageCode;
 	}

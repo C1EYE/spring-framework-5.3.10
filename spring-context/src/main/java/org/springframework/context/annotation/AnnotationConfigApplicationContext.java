@@ -105,6 +105,7 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 		this();
 		// 注册外部传进来的配置类
 		register(componentClasses);
+		// 在完成 register后，此时我们还未创建任何 bean 实例，只是将一些 class 注册成为 beanDefinition
 		// 刷新容器，完成 Bean 的扫描注册，并且初始化创建所有非懒加载的单例 Bean
 		refresh();
 	}
