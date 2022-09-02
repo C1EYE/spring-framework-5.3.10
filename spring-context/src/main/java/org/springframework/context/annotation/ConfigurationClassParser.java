@@ -16,30 +16,8 @@
 
 package org.springframework.context.annotation;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringJoiner;
-import java.util.function.Predicate;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
@@ -60,11 +38,8 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.core.env.CompositePropertySource;
-import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySource;
+import org.springframework.core.env.*;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.DefaultPropertySourceFactory;
@@ -79,12 +54,15 @@ import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
+import org.springframework.util.*;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * Parses a {@link Configuration} class definition, populating a collection of
@@ -161,6 +139,7 @@ class ConfigurationClassParser {
 		this.environment = environment;
 		this.resourceLoader = resourceLoader;
 		this.registry = registry;
+		// 创建一个包扫描的解析器
 		this.componentScanParser = new ComponentScanAnnotationParser(
 				environment, resourceLoader, componentScanBeanNameGenerator, registry);
 		this.conditionEvaluator = new ConditionEvaluator(registry, environment, resourceLoader);
@@ -223,6 +202,7 @@ class ConfigurationClassParser {
 
 
 	protected void processConfigurationClass(ConfigurationClass configClass, Predicate<String> filter) throws IOException {
+		// 解析配置是否有 @Condition 注解，有的话调用match方法判断是不是需要跳过解析此配置类
 		if (this.conditionEvaluator.shouldSkip(configClass.getMetadata(), ConfigurationPhase.PARSE_CONFIGURATION)) {
 			return;
 		}
@@ -244,13 +224,14 @@ class ConfigurationClassParser {
 			}
 		}
 
-		// Recursively process the configuration class and its superclass hierarchy.
+		// 一值往上寻找配置类的父类解析，直到为Null为止
 		SourceClass sourceClass = asSourceClass(configClass, filter);
 		do {
+			// 解析 @Component @PropertySources @PropertySource @ComponentScans @ComponentScan @ImportResource 注解
 			sourceClass = doProcessConfigurationClass(configClass, sourceClass, filter);
 		}
 		while (sourceClass != null);
-
+		// 解析完成后，添加到这个集合
 		this.configurationClasses.put(configClass, configClass);
 	}
 
@@ -272,7 +253,7 @@ class ConfigurationClassParser {
 			processMemberClasses(configClass, sourceClass, filter);
 		}
 
-		// Process any @PropertySource annotations
+		// 解析 @PropertySources 和 @PropertySource 注解，并将注解的 properties 属性文件添加到容器的环境变量对象中
 		for (AnnotationAttributes propertySource : AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), PropertySources.class,
 				org.springframework.context.annotation.PropertySource.class)) {
@@ -285,21 +266,22 @@ class ConfigurationClassParser {
 			}
 		}
 
-		// Process any @ComponentScan annotations
+		// 解析 @ComponentScans 和 @ComponentScan 注解
 		Set<AnnotationAttributes> componentScans = AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), ComponentScans.class, ComponentScan.class);
 		if (!componentScans.isEmpty() &&
 				!this.conditionEvaluator.shouldSkip(sourceClass.getMetadata(), ConfigurationPhase.REGISTER_BEAN)) {
 			for (AnnotationAttributes componentScan : componentScans) {
-				// The config class is annotated with @ComponentScan -> perform the scan immediately
+				// 扫描 componentScan 所指定的路径，将扫描到的所有类封装成 BeanDefinitionHolder 返回
 				Set<BeanDefinitionHolder> scannedBeanDefinitions =
 						this.componentScanParser.parse(componentScan, sourceClass.getMetadata().getClassName());
-				// Check the set of scanned definitions for any further config classes and parse recursively if needed
+				// 建立所有扫描到的 beanDefinition
 				for (BeanDefinitionHolder holder : scannedBeanDefinitions) {
 					BeanDefinition bdCand = holder.getBeanDefinition().getOriginatingBeanDefinition();
 					if (bdCand == null) {
 						bdCand = holder.getBeanDefinition();
 					}
+					// 判断扫描到的 beanDefinition 是不是一个配置类，如果是的话，继续递归继续该配置类
 					if (ConfigurationClassUtils.checkConfigurationClassCandidate(bdCand, this.metadataReaderFactory)) {
 						parse(bdCand.getBeanClassName(), holder.getBeanName());
 					}

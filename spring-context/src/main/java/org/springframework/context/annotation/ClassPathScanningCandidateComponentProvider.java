@@ -16,17 +16,8 @@
 
 package org.springframework.context.annotation;
 
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.annotation.Lookup;
@@ -52,13 +43,13 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.core.type.filter.TypeFilter;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
-import org.springframework.stereotype.Indexed;
-import org.springframework.stereotype.Repository;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.*;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.util.*;
 
 /**
  * A component provider that provides candidate components from a base package. Can
@@ -318,10 +309,12 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 * @return a corresponding Set of autodetected bean definitions
 	 */
 	public Set<BeanDefinition> findCandidateComponents(String basePackage) {
+		// 支持使用索引文件快速寻找 META-INF/spring.components 指定要注册的bean
 		if (this.componentsIndex != null && indexSupportsIncludeFilters()) {
 			return addCandidateComponentsFromIndex(this.componentsIndex, basePackage);
 		}
 		else {
+			// 去指定包路径下寻找
 			return scanCandidateComponents(basePackage);
 		}
 	}
@@ -425,8 +418,10 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	private Set<BeanDefinition> scanCandidateComponents(String basePackage) {
 		Set<BeanDefinition> candidates = new LinkedHashSet<>();
 		try {
+			// 根据包名拼接 ant 风格路径，默认生成的是类路径下所有该包路径下的所有子孙包的class文件
 			String packageSearchPath = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
 					resolveBasePackage(basePackage) + '/' + this.resourcePattern;
+			// 根据类路径找到所有的class文件，此时的class文件就是一个很普通的File文件对象
 			Resource[] resources = getResourcePatternResolver().getResources(packageSearchPath);
 			boolean traceEnabled = logger.isTraceEnabled();
 			boolean debugEnabled = logger.isDebugEnabled();
@@ -434,12 +429,18 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 				if (traceEnabled) {
 					logger.trace("Scanning " + resource);
 				}
+				// 判断class文件是否可读
 				if (resource.isReadable()) {
 					try {
+						// 使用ASM字节码解析器，解析class文件，此时并未将class加载到内存，属于静态分析
 						MetadataReader metadataReader = getMetadataReaderFactory().getMetadataReader(resource);
+						// 使用预先定义好的规则去过滤这个class文件，判断是不是能够注册成为 bean
 						if (isCandidateComponent(metadataReader)) {
+							// 将这个class文件解析到的元数据信息，封装到beanDefinition当中
 							ScannedGenericBeanDefinition sbd = new ScannedGenericBeanDefinition(metadataReader);
+							// 设置这个beanDefinition所属类的源文件对象
 							sbd.setSource(resource);
+							// 判断这个 class 文件是不是一个接口或者抽象类
 							if (isCandidateComponent(sbd)) {
 								if (debugEnabled) {
 									logger.debug("Identified candidate component class: " + resource);

@@ -16,14 +16,6 @@
 
 package org.springframework.context.annotation;
 
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Pattern;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -32,15 +24,14 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.core.type.filter.AbstractTypeHierarchyTraversingFilter;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
-import org.springframework.core.type.filter.AspectJTypeFilter;
-import org.springframework.core.type.filter.AssignableTypeFilter;
-import org.springframework.core.type.filter.RegexPatternTypeFilter;
-import org.springframework.core.type.filter.TypeFilter;
+import org.springframework.core.type.filter.*;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
+
+import java.lang.annotation.Annotation;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Parser for the @{@link ComponentScan} annotation.
@@ -74,14 +65,17 @@ class ComponentScanAnnotationParser {
 
 
 	public Set<BeanDefinitionHolder> parse(AnnotationAttributes componentScan, final String declaringClass) {
+		// componentScan.getBoolean("useDefaultFilters") 判断是否使用默认的组件规则过滤器
 		ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(this.registry,
 				componentScan.getBoolean("useDefaultFilters"), this.environment, this.resourceLoader);
 
+		// 获取 @ComponentScan 注解的 nameGenerator 属性
 		Class<? extends BeanNameGenerator> generatorClass = componentScan.getClass("nameGenerator");
 		boolean useInheritedGenerator = (BeanNameGenerator.class == generatorClass);
 		scanner.setBeanNameGenerator(useInheritedGenerator ? this.beanNameGenerator :
 				BeanUtils.instantiateClass(generatorClass));
 
+		// 获取 @ComponentScan 注解的 scopedProxy 属性
 		ScopedProxyMode scopedProxyMode = componentScan.getEnum("scopedProxy");
 		if (scopedProxyMode != ScopedProxyMode.DEFAULT) {
 			scanner.setScopedProxyMode(scopedProxyMode);
@@ -90,9 +84,11 @@ class ComponentScanAnnotationParser {
 			Class<? extends ScopeMetadataResolver> resolverClass = componentScan.getClass("scopeResolver");
 			scanner.setScopeMetadataResolver(BeanUtils.instantiateClass(resolverClass));
 		}
-
+		// 获取 @ComponentScan 注解的 resourcePattern 属性
 		scanner.setResourcePattern(componentScan.getString("resourcePattern"));
 
+		// 获取 @ComponentScan 注解的 includeFilters 属性
+		// 然后将规则添加到我们的 scanner 里面，会在扫描的时候运用到
 		for (AnnotationAttributes filter : componentScan.getAnnotationArray("includeFilters")) {
 			for (TypeFilter typeFilter : typeFiltersFor(filter)) {
 				scanner.addIncludeFilter(typeFilter);
@@ -104,18 +100,22 @@ class ComponentScanAnnotationParser {
 			}
 		}
 
+		// 获取 @ComponentScan 注解的 lazyInit 属性
 		boolean lazyInit = componentScan.getBoolean("lazyInit");
 		if (lazyInit) {
 			scanner.getBeanDefinitionDefaults().setLazyInit(true);
 		}
 
 		Set<String> basePackages = new LinkedHashSet<>();
+		// 获取 @ComponentScan 注解的 basePackages 属性
 		String[] basePackagesArray = componentScan.getStringArray("basePackages");
 		for (String pkg : basePackagesArray) {
+			// 支持在单个字符串 ",; \t\n" 使用这些符合做多个包名分割
 			String[] tokenized = StringUtils.tokenizeToStringArray(this.environment.resolvePlaceholders(pkg),
 					ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
 			Collections.addAll(basePackages, tokenized);
 		}
+		// 获取 @ComponentScan 注解的 basePackageClasses 属性
 		for (Class<?> clazz : componentScan.getClassArray("basePackageClasses")) {
 			basePackages.add(ClassUtils.getPackageName(clazz));
 		}
@@ -129,6 +129,7 @@ class ComponentScanAnnotationParser {
 				return declaringClass.equals(className);
 			}
 		});
+		// 对包路径进行扫描
 		return scanner.doScan(StringUtils.toStringArray(basePackages));
 	}
 

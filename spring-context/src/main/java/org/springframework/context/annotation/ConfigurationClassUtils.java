@@ -16,14 +16,8 @@
 
 package org.springframework.context.annotation;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.aop.framework.AopInfrastructureBean;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -40,6 +34,11 @@ import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Utilities for identifying {@link Configuration} classes.
@@ -100,6 +99,7 @@ abstract class ConfigurationClassUtils {
 			// Check already loaded Class if present...
 			// since we possibly can't even load the class file for this Class.
 			Class<?> beanClass = ((AbstractBeanDefinition) beanDef).getBeanClass();
+			// 如果该 beanDefinition 实现了其中四中接口的任意一种，那么就会判断为不是一个配置类
 			if (BeanFactoryPostProcessor.class.isAssignableFrom(beanClass) ||
 					BeanPostProcessor.class.isAssignableFrom(beanClass) ||
 					AopInfrastructureBean.class.isAssignableFrom(beanClass) ||
@@ -121,19 +121,22 @@ abstract class ConfigurationClassUtils {
 				return false;
 			}
 		}
-
+		// 获取类上的 @Configuration 注解元数据信息
 		Map<String, Object> config = metadata.getAnnotationAttributes(Configuration.class.getName());
 		if (config != null && !Boolean.FALSE.equals(config.get("proxyBeanMethods"))) {
+			// 如果获取到了@Configuration 注解元数据信息，且proxyBeanMethods为true，设置它属性为full配置类
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		}
 		else if (config != null || isConfigurationCandidate(metadata)) {
+			// 如果没有获取到@Configuration 注解元数据信息，但是如果 isConfigurationCandidate 方法返回true的话
+			// 设置它属性为lite配置类
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
 		}
 		else {
 			return false;
 		}
-
-		// It's a full or lite configuration candidate... Let's determine the order value, if any.
+		// full配置类 和 lite配置类 的区别就是，前者会生成该配置类的代理
+		// 检查一下配置类是否有 @Order注解，有的话取出 value值，设置到 beanDefinition
 		Integer order = getOrder(metadata);
 		if (order != null) {
 			beanDef.setAttribute(ORDER_ATTRIBUTE, order);
@@ -150,19 +153,19 @@ abstract class ConfigurationClassUtils {
 	 * configuration class processing; {@code false} otherwise
 	 */
 	public static boolean isConfigurationCandidate(AnnotationMetadata metadata) {
-		// Do not consider an interface or an annotation...
+		// 如果是一个接口直接返回 false
 		if (metadata.isInterface()) {
 			return false;
 		}
 
-		// Any of the typical annotations found?
+		// 判断是否有 @Component @ComponentScan @Import @ImportResource 其中任意的注解返回true
 		for (String indicator : candidateIndicators) {
 			if (metadata.isAnnotated(indicator)) {
 				return true;
 			}
 		}
 
-		// Finally, let's look for @Bean methods...
+		// 最后再找一下看看这个类有什么 方法被@Bean标注
 		return hasBeanMethods(metadata);
 	}
 

@@ -16,17 +16,10 @@
 
 package org.springframework.context.annotation;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
-import org.springframework.beans.factory.support.AbstractBeanDefinition;
-import org.springframework.beans.factory.support.BeanDefinitionDefaults;
-import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
-import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.beans.factory.support.BeanNameGenerator;
+import org.springframework.beans.factory.support.*;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.EnvironmentCapable;
 import org.springframework.core.env.StandardEnvironment;
@@ -34,6 +27,9 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.PatternMatchUtils;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * A bean definition scanner that detects bean candidates on the classpath,
@@ -272,19 +268,29 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
 		Assert.notEmpty(basePackages, "At least one base package must be specified");
 		Set<BeanDefinitionHolder> beanDefinitions = new LinkedHashSet<>();
+		// 遍历所包路径参数数组
 		for (String basePackage : basePackages) {
+			// 根据包路径找到所有符合条件的beanDefinition
+			// 这里的判断条件就是 excludeFilters includeFilters 两个集合的过滤，以及判断你是不是抽象类或者接口
 			Set<BeanDefinition> candidates = findCandidateComponents(basePackage);
+			// 开始遍历根据包路径找到的 beanDefinition
 			for (BeanDefinition candidate : candidates) {
+				// 解析 beanDefinition 的 scope 属性
 				ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(candidate);
 				candidate.setScope(scopeMetadata.getScopeName());
+				// 生成 beanName
 				String beanName = this.beanNameGenerator.generateBeanName(candidate, this.registry);
 				if (candidate instanceof AbstractBeanDefinition) {
+					// 设置一些默认值
 					postProcessBeanDefinition((AbstractBeanDefinition) candidate, beanName);
 				}
 				if (candidate instanceof AnnotatedBeanDefinition) {
+					// @Lazy @Primary @DependsOn @Role @Description 注解
 					AnnotationConfigUtils.processCommonDefinitionAnnotations((AnnotatedBeanDefinition) candidate);
 				}
+				// 检查 beanDefinition 是否存在冲突
 				if (checkCandidate(beanName, candidate)) {
+					// 无冲突，注册到 beanDefinition Map
 					BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(candidate, beanName);
 					definitionHolder =
 							AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
@@ -333,14 +339,19 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * bean definition has been found for the specified name
 	 */
 	protected boolean checkCandidate(String beanName, BeanDefinition beanDefinition) throws IllegalStateException {
+		// 判断该 beanName 是否已经存在 beanDefinitionMap 中
 		if (!this.registry.containsBeanDefinition(beanName)) {
 			return true;
 		}
+		// 获取已经存在的 beanDefinition
 		BeanDefinition existingDef = this.registry.getBeanDefinition(beanName);
 		BeanDefinition originatingDef = existingDef.getOriginatingBeanDefinition();
 		if (originatingDef != null) {
 			existingDef = originatingDef;
 		}
+		// 比较已经存在的 existingDef 和 待注册的 beanDefinition 是否可以兼容
+		// 首先会判断已经存在的 existingDef 是否也是扫描进来的，如果不是的话就不可以兼容，
+		// 如果已经存的 existingDef 是扫描进来的，那么进一步对比两者的源class是否一样
 		if (isCompatible(beanDefinition, existingDef)) {
 			return false;
 		}

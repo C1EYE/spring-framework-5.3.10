@@ -1,8 +1,7 @@
 package com.demo1.config;
 
-import com.demo1.annotation.Demo;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * @author Yuan
@@ -10,7 +9,6 @@ import org.springframework.context.annotation.Conditional;
  * @date 2022/9/1
  */
 @ComponentScan("com.demo1")
-@Demo
-@Conditional({MyCondition.class})
+@Configuration
 public class AppConfig {
 }
