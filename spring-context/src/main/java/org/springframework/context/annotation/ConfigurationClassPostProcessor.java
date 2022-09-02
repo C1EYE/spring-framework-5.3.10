@@ -283,7 +283,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			}
 		}
 
-		// 判断是否有找到配置类，没有则直接回访
+		// 判断是否有找到配置类，没有则直接返回
 		if (configCandidates.isEmpty()) {
 			return;
 		}
@@ -317,13 +317,15 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		ConfigurationClassParser parser = new ConfigurationClassParser(
 				this.metadataReaderFactory, this.problemReporter, this.environment,
 				this.resourceLoader, this.componentScanBeanNameGenerator, registry);
-
+		// 存放本次解析出来的配置类
 		Set<BeanDefinitionHolder> candidates = new LinkedHashSet<>(configCandidates);
 		// 存放已经解析过的配置类
 		Set<ConfigurationClass> alreadyParsed = new HashSet<>(configCandidates.size());
 		do {
 			StartupStep processConfig = this.applicationStartup.start("spring.context.config-classes.parse");
+			// 递归解析配置类，将获取到的类注册成beanDefinition
 			parser.parse(candidates);
+			// 如果你的配置类配置了proxyBeanMethods=true，那么会检查你的类是不是被 Final修饰，如果是的话抛异常
 			parser.validate();
 
 			Set<ConfigurationClass> configClasses = new LinkedHashSet<>(parser.getConfigurationClasses());
