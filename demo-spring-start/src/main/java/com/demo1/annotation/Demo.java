@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * @author Yuan
- * @description Abc
+ * @description Demo
  * @date 2022/9/1
  */
 @Retention(RetentionPolicy.RUNTIME)

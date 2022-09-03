@@ -531,8 +531,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			try {
 				// 留给子类扩展实现的方法，可以往容器添加一些自定义的类，比方说 BeanPostProcessors
 				postProcessBeanFactory(beanFactory);
-
 				StartupStep beanPostProcess = this.applicationStartup.start("spring.context.beans.post-process");
+
 				// 回调 bean工厂后置处理器，这一步会去扫描注册我们所以定义的class
 				// 将其注册成为beanDefinition
 				invokeBeanFactoryPostProcessors(beanFactory);
@@ -583,6 +583,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				// 清楚一些刷新过程中使用到的缓冲
 				resetCommonCaches();
 				contextRefresh.end();
+
 			}
 		}
 	}
@@ -631,7 +632,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * <p>Replace any stub property sources with actual instances.
 	 * @see org.springframework.core.env.PropertySource.StubPropertySource
-	 * @see org.springframework.web.context.support.WebApplicationContextUtils#initServletPropertySources
+//	 * @see org.springframework.web.context.support.WebApplicationContextUtils#initServletPropertySources
 	 */
 	protected void initPropertySources() {
 		// For subclasses: do nothing by default.
