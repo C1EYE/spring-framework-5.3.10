@@ -16,9 +16,6 @@
 
 package org.springframework.web.context.support;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.support.GenericApplicationContext;
@@ -35,6 +32,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 import org.springframework.web.context.ConfigurableWebEnvironment;
 import org.springframework.web.context.ServletContextAware;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 
 /**
  * Subclass of {@link GenericApplicationContext}, suitable for web environments.
@@ -152,6 +152,7 @@ public class GenericWebApplicationContext extends GenericApplicationContext
 			beanFactory.addBeanPostProcessor(new ServletContextAwareProcessor(this.servletContext));
 			beanFactory.ignoreDependencyInterface(ServletContextAware.class);
 		}
+		// 注册 Web Scope 自定义作用域
 		WebApplicationContextUtils.registerWebApplicationScopes(beanFactory, this.servletContext);
 		WebApplicationContextUtils.registerEnvironmentBeans(beanFactory, this.servletContext);
 	}

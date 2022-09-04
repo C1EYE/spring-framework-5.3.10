@@ -228,7 +228,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 
 		else {
-			// 循环引用检查
+			// 检查非单例 Bean 是否发生循环引用检查
 			if (isPrototypeCurrentlyInCreation(beanName)) {
 				throw new BeanCurrentlyInCreationException(beanName);
 			}
@@ -308,6 +308,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 							throw ex;
 						}
 					});
+					// FactoryBean 类型推断处理
 					beanInstance = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
 				// 创建原型
@@ -315,12 +316,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					// It's a prototype -> create a new instance.
 					Object prototypeInstance = null;
 					try {
+						// 创建原型 Bean 的前置操作，主要标记当前原型 Bean 创建中
 						beforePrototypeCreation(beanName);
 						prototypeInstance = createBean(beanName, mbd, args);
 					}
 					finally {
 						afterPrototypeCreation(beanName);
 					}
+					// FactoryBean 类型推断处理
 					beanInstance = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
 				}
 				// 创建自定义作用域的 bean, 如果 request session
@@ -343,6 +346,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 								afterPrototypeCreation(beanName);
 							}
 						});
+						// FactoryBean 类型推断处理
 						beanInstance = getObjectForBeanInstance(scopedInstance, name, beanName, mbd);
 					}
 					catch (IllegalStateException ex) {
@@ -1750,9 +1754,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		if (!this.alreadyCreated.contains(beanName)) {
 			synchronized (this.mergedBeanDefinitions) {
 				if (!this.alreadyCreated.contains(beanName)) {
-					// Let the bean definition get re-merged now that we're actually creating
-					// the bean... just in case some of its metadata changed in the meantime.
+					// 设置 beanDefinition 需要重新合并
 					clearMergedBeanDefinition(beanName);
+					// 将当前 beanName 添加到 alreadyCreated Set集合
+					// 表示当前 bean 正在创建中，为检查是否发生循环依赖做准备
 					this.alreadyCreated.add(beanName);
 				}
 			}
