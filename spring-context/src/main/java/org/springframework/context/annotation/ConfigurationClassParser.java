@@ -305,13 +305,15 @@ class ConfigurationClassParser {
 			Class<? extends BeanDefinitionReader> readerClass = importResource.getClass("reader");
 			for (String resource : resources) {
 				String resolvedResource = this.environment.resolveRequiredPlaceholders(resource);
+				// 将解析到的配置文件名，保存当前配置类的 importedResources 属性，这里并没有去解析配置文件
 				configClass.addImportedResource(resolvedResource, readerClass);
 			}
 		}
 
-		// 解析 @Bean 注解
+		// 解析 @Bean 注解，将被 @Bean 标注的方法解析包装成为一个 BeanMethod 对象，并没有进一步去解析
 		Set<MethodMetadata> beanMethods = retrieveBeanMethodMetadata(sourceClass);
 		for (MethodMetadata methodMetadata : beanMethods) {
+			// 保存到配置类的 beanMethods 属性上
 			configClass.addBeanMethod(new BeanMethod(methodMetadata, configClass));
 		}
 
@@ -321,10 +323,10 @@ class ConfigurationClassParser {
 		// 获取父类，如果有的话，递归调用该方法并解析父类
 		if (sourceClass.getMetadata().hasSuperClass()) {
 			String superclass = sourceClass.getMetadata().getSuperClassName();
+			// 如果父类不为空，且类名不是以 java 开头的
 			if (superclass != null && !superclass.startsWith("java") &&
 					!this.knownSuperclasses.containsKey(superclass)) {
 				this.knownSuperclasses.put(superclass, configClass);
-				// Superclass found, return its annotation metadata and recurse
 				return sourceClass.getSuperClass();
 			}
 		}
@@ -373,14 +375,17 @@ class ConfigurationClassParser {
 	 * Register default methods on interfaces implemented by the configuration class.
 	 */
 	private void processInterfaces(ConfigurationClass configClass, SourceClass sourceClass) throws IOException {
+		// 获取配置类的所有实现的接口
 		for (SourceClass ifc : sourceClass.getInterfaces()) {
+			// 获取接口中是否有 @Bean 标注的方法
 			Set<MethodMetadata> beanMethods = retrieveBeanMethodMetadata(ifc);
 			for (MethodMetadata methodMetadata : beanMethods) {
 				if (!methodMetadata.isAbstract()) {
-					// A default method or other concrete method on a Java 8+ interface...
+					// 将配置类的接口中获取到的 @Bean 方法，保存到配置类的 beanMethods 属性上
 					configClass.addBeanMethod(new BeanMethod(methodMetadata, configClass));
 				}
 			}
+			// 递归调用，看接口是否还有父接口可以解析
 			processInterfaces(configClass, ifc);
 		}
 	}

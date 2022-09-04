@@ -327,29 +327,38 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			parser.parse(candidates);
 			// 如果你的配置类配置了proxyBeanMethods=true，那么会检查你的类是不是被 Final修饰，如果是的话抛异常
 			parser.validate();
-
+			// 获取本次解析到的所有配置类
 			Set<ConfigurationClass> configClasses = new LinkedHashSet<>(parser.getConfigurationClasses());
+			// 移除放到已经解析的集合里面，标志这些配置类已经解析过了
 			configClasses.removeAll(alreadyParsed);
 
-			// Read the model and create bean definitions based on its content
 			if (this.reader == null) {
 				this.reader = new ConfigurationClassBeanDefinitionReader(
 						registry, this.sourceExtractor, this.resourceLoader, this.environment,
 						this.importBeanNameGenerator, parser.getImportRegistry());
 			}
+			// 处理配置类，注册成为 BeanDefinition，配置类的 beanMethods，importBeanDefinitionRegistrars 属性解析到的类会在这里处理
 			this.reader.loadBeanDefinitions(configClasses);
 			alreadyParsed.addAll(configClasses);
 			processConfig.tag("classCount", () -> String.valueOf(configClasses.size())).end();
 
 			candidates.clear();
+			// 判断现在容器内的总 beanDefinition 数量是否大于在解析的 beanDefinition 数量
+			// 如果大于的话，说明有新增的 beanDefinition，反之没有
 			if (registry.getBeanDefinitionCount() > candidateNames.length) {
+				// 先获取当前容器最新所有的 beanDefinition
 				String[] newCandidateNames = registry.getBeanDefinitionNames();
+				// 将本次循环解析前获取到的所有 beanDefinition 保存起来
 				Set<String> oldCandidateNames = new HashSet<>(Arrays.asList(candidateNames));
+				// 创建一个已经解析过的容器，保存已经解析配置类的类名
 				Set<String> alreadyParsedClasses = new HashSet<>();
 				for (ConfigurationClass configurationClass : alreadyParsed) {
 					alreadyParsedClasses.add(configurationClass.getMetadata().getClassName());
 				}
 				for (String candidateName : newCandidateNames) {
+					// 判断这个 beanDefinition 是不是已经存在了
+					// 如果不存在说明这是新增的，需要进一步判断这个 beanDefinition 是不是一个配置类
+					// 如果是的话加入到 candidates 集合，继续进一步解析这个配置类
 					if (!oldCandidateNames.contains(candidateName)) {
 						BeanDefinition bd = registry.getBeanDefinition(candidateName);
 						if (ConfigurationClassUtils.checkConfigurationClassCandidate(bd, this.metadataReaderFactory) &&
