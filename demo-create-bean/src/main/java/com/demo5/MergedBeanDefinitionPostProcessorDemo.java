@@ -4,16 +4,15 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 /**
  * @author Yuan
- * @description ResolveBeforeInstantiationDemo
+ * @description Demo
  * @date 2022/9/4
  */
-public class ResolveBeforeInstantiationDemo {
+public class MergedBeanDefinitionPostProcessorDemo {
 	public static void main(String[] args) {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 		context.register(BeanA.class);
-		context.register(MyInstantiationAwareBeanPostProcessor.class);
-		context.register(MyBeanPostProcessor.class);
+		context.register(MyMergedBeanDefinitionPostProcessor.class);
 		context.refresh();
-		System.out.println(context.getBean("beanA"));
+		System.out.println(context.getBean(BeanA.class).getName());
 	}
 }

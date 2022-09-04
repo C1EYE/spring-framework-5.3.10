@@ -496,6 +496,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		try {
+			// 创建 bean 实例
 			Object beanInstance = doCreateBean(beanName, mbdToUse, args);
 			if (logger.isTraceEnabled()) {
 				logger.trace("Finished creating instance of bean '" + beanName + "'");
@@ -530,12 +531,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	protected Object doCreateBean(String beanName, RootBeanDefinition mbd, @Nullable Object[] args)
 			throws BeanCreationException {
 
-		// Instantiate the bean.
 		BeanWrapper instanceWrapper = null;
 		if (mbd.isSingleton()) {
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
 		}
 		if (instanceWrapper == null) {
+			// 创建一个 bean 的包装类，并创建 bean 对象
 			instanceWrapper = createBeanInstance(beanName, mbd, args);
 		}
 		Object bean = instanceWrapper.getWrappedInstance();
@@ -544,10 +545,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			mbd.resolvedTargetType = beanType;
 		}
 
-		// Allow post-processors to modify the merged bean definition.
 		synchronized (mbd.postProcessingLock) {
 			if (!mbd.postProcessed) {
 				try {
+					// 回调 MergedBeanDefinitionPostProcessor#postProcessMergedBeanDefinition方法
+					// 允许我们扩展修改 beanDefinition，比方说做一些属性注入
 					applyMergedBeanDefinitionPostProcessors(mbd, beanType, beanName);
 				}
 				catch (Throwable ex) {
@@ -558,8 +560,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 
-		// Eagerly cache singletons to be able to resolve circular references
-		// even when triggered by lifecycle interfaces like BeanFactoryAware.
+		// 如果当前 bean 是单例，且允许循环依赖，并且这个 bean 正在创建中
 		boolean earlySingletonExposure = (mbd.isSingleton() && this.allowCircularReferences &&
 				isSingletonCurrentlyInCreation(beanName));
 		if (earlySingletonExposure) {
@@ -567,13 +568,16 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				logger.trace("Eagerly caching bean '" + beanName +
 						"' to allow for resolving potential circular references");
 			}
+			// 那么将当前的 bean 对象保证成一个 lambda 工厂方法缓存到三级缓存，解决循环依赖的关键点
 			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
 		}
 
-		// Initialize the bean instance.
+		// 用一个局部变量记录然后去做初始化
 		Object exposedObject = bean;
 		try {
+			// 属性依赖注入
 			populateBean(beanName, mbd, instanceWrapper);
+			// bean 初始化
 			exposedObject = initializeBean(beanName, exposedObject, mbd);
 		}
 		catch (Throwable ex) {
@@ -585,11 +589,16 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 						mbd.getResourceDescription(), beanName, "Initialization of bean failed", ex);
 			}
 		}
-
+		// 如果允许暴露三级缓存实例
 		if (earlySingletonExposure) {
+			// 那么会去一级或二级缓存取出，这里不会去三级缓存获取，因为第二个参数为 false
 			Object earlySingletonReference = getSingleton(beanName, false);
+			// 如果 getSingleton 获取到了 bean 实例不为 null
 			if (earlySingletonReference != null) {
+				// 首先判断初始化前的对象实例和初始化后的对象实例是否一样
 				if (exposedObject == bean) {
+					// 如果一样，说明在初始化这个步骤没有后处理器修改过该对象
+					// 那么就把从 getSingleton 获取到的对象作为最终对象返回
 					exposedObject = earlySingletonReference;
 				}
 				else if (!this.allowRawInjectionDespiteWrapping && hasDependentBean(beanName)) {
@@ -613,8 +622,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 
-		// Register bean as disposable.
 		try {
+			// 将 bean 实例注册到容器销毁钩子函数当中
+			// 当容器销毁时会来调用 bean 的生命周期销毁方法
 			registerDisposableBeanIfNecessary(beanName, bean, mbd);
 		}
 		catch (BeanDefinitionValidationException ex) {
@@ -937,6 +947,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	protected Object getEarlyBeanReference(String beanName, RootBeanDefinition mbd, Object bean) {
 		Object exposedObject = bean;
+		// 判断当前 bean 实例是否需求 AOP，如果需要 AOP，创建代理对象再返回给调用者
 		if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
 			for (SmartInstantiationAwareBeanPostProcessor bp : getBeanPostProcessorCache().smartInstantiationAware) {
 				exposedObject = bp.getEarlyBeanReference(exposedObject, beanName);
