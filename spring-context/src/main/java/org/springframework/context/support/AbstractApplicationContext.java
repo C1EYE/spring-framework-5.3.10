@@ -1139,7 +1139,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 	@Override
 	public Object getBean(String name) throws BeansException {
+		// 检查容器是否存于活跃可用状态
 		assertBeanFactoryActive();
+		// 通过 beanFactory 去获取 bean 或者创建 bean
+		// ApplicationContext 本身不具备创建 bean 的功能，是组合了 BeanFactory
 		return getBeanFactory().getBean(name);
 	}
 

@@ -16,26 +16,15 @@
 
 package org.springframework.beans.factory.support;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.BeanCreationNotAllowedException;
-import org.springframework.beans.factory.BeanCurrentlyInCreationException;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.beans.factory.*;
 import org.springframework.beans.factory.config.SingletonBeanRegistry;
 import org.springframework.core.SimpleAliasRegistry;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Generic registry for shared bean instances, implementing the
@@ -178,21 +167,30 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
-		// Quick check for existing instance without full singleton lock
+		// 先从一级缓存单例池中获取
 		Object singletonObject = this.singletonObjects.get(beanName);
+		// 如果一级缓存获取不到，且这个 bean 正在创建中
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
+			// 那么从二级缓存获取
 			singletonObject = this.earlySingletonObjects.get(beanName);
+			// 如果二级缓存获取不到，且允许解决循环依赖
 			if (singletonObject == null && allowEarlyReference) {
+				// 这里上锁，主要是防止从三级缓存并发获取，重复创建对象
 				synchronized (this.singletonObjects) {
-					// Consistent creation of early reference within full singleton lock
+					// 再次从一级缓存获取检查是否存在，双检锁机制
 					singletonObject = this.singletonObjects.get(beanName);
 					if (singletonObject == null) {
+						// 再次从一级缓存获取检查是否存在
 						singletonObject = this.earlySingletonObjects.get(beanName);
 						if (singletonObject == null) {
+							// 从三级缓存获取，三级缓存存放的是一个 lambda 工厂方法
 							ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 							if (singletonFactory != null) {
+								// 调用工厂方法，获取一个 bean实例
 								singletonObject = singletonFactory.getObject();
+								// 将获取得到的 bean 实例放入二级缓存
 								this.earlySingletonObjects.put(beanName, singletonObject);
+								// 将一级缓存对应的 lambda 工厂方法删除
 								this.singletonFactories.remove(beanName);
 							}
 						}
