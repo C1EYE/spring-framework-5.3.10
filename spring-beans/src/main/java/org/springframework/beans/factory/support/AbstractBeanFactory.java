@@ -370,9 +370,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	@SuppressWarnings("unchecked")
 	<T> T adaptBeanInstance(String name, Object bean, @Nullable Class<?> requiredType) {
-		// Check if required type matches the type of the actual bean instance.
+		// requiredType.isInstance(bean) 类型相同返回 true
+		// requiredType.isInstance(bean) 如果是bean的父类返回 true
+		// requiredType.isInstance(bean) bean的子类返回 false
 		if (requiredType != null && !requiredType.isInstance(bean)) {
 			try {
+				// 尝试进行类型转换
 				Object convertedBean = getTypeConverter().convertIfNecessary(bean, requiredType);
 				if (convertedBean == null) {
 					throw new BeanNotOfRequiredTypeException(name, requiredType, bean.getClass());

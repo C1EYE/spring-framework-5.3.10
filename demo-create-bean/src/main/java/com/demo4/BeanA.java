@@ -5,6 +5,6 @@ package com.demo4;
  * @description BeanA
  * @date 2022/9/4
  */
-public class BeanA{
+public class BeanA {
 
 }

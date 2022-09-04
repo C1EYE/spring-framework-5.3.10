@@ -14,6 +14,6 @@ public class ResolveBeforeInstantiationDemo {
 		context.register(MyInstantiationAwareBeanPostProcessor.class);
 		context.register(MyBeanPostProcessor.class);
 		context.refresh();
-		System.out.println(context.getBean("beanA"));
+		System.out.println(context.getBean("beanA",BeanA.class));
 	}
 }
