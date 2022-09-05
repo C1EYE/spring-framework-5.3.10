@@ -1148,44 +1148,52 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @see #instantiateBean
 	 */
 	protected BeanWrapper createBeanInstance(String beanName, RootBeanDefinition mbd, @Nullable Object[] args) {
-		// Make sure bean class is actually resolved at this point.
+		// 创建前在检查一次，class 对象是否已经加载，如果未加载会去进行加载
 		Class<?> beanClass = resolveBeanClass(mbd, beanName);
 
+		// 检查 class 对象是否公开可以访问的
 		if (beanClass != null && !Modifier.isPublic(beanClass.getModifiers()) && !mbd.isNonPublicAccessAllowed()) {
 			throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 					"Bean class isn't public, and non-public access not allowed: " + beanClass.getName());
 		}
-
+		// 检查 beanDefinition 是否有设置 Supplier 接口
+		// 如果有的话直接调用获取该接口返回值为 bean 实例
 		Supplier<?> instanceSupplier = mbd.getInstanceSupplier();
 		if (instanceSupplier != null) {
 			return obtainFromSupplier(instanceSupplier, beanName);
 		}
 
+		// 检查 beanDefinition 是否有设置 FactoryMethodName
+		// 如果有的话直接调用获取方法返回值为 bean 实例
 		if (mbd.getFactoryMethodName() != null) {
 			return instantiateUsingFactoryMethod(beanName, mbd, args);
 		}
 
-		// Shortcut when re-creating the same bean...
 		boolean resolved = false;
 		boolean autowireNecessary = false;
 		if (args == null) {
 			synchronized (mbd.constructorArgumentLock) {
+				// 检查是否有缓存的构造方法
 				if (mbd.resolvedConstructorOrFactoryMethod != null) {
+					// resolved = true 表示有缓存的构造方法可用
 					resolved = true;
+					// 判断是否需要通过有参构造函数创建
 					autowireNecessary = mbd.constructorArgumentsResolved;
 				}
 			}
 		}
 		if (resolved) {
 			if (autowireNecessary) {
+				// 有缓存的有参构造方法创建
 				return autowireConstructor(beanName, mbd, null, null);
 			}
 			else {
+				// 有缓存的无参构造方法创建
 				return instantiateBean(beanName, mbd);
 			}
 		}
 
-		// Candidate constructors for autowiring?
+		// 获取所有的构造函数，包含 private 修饰的
 		Constructor<?>[] ctors = determineConstructorsFromBeanPostProcessors(beanClass, beanName);
 		if (ctors != null || mbd.getResolvedAutowireMode() == AUTOWIRE_CONSTRUCTOR ||
 				mbd.hasConstructorArgumentValues() || !ObjectUtils.isEmpty(args)) {
