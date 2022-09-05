@@ -7,12 +7,13 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
  * @description Demo
  * @date 2022/9/5
  */
-public class Demo {
+public class MergedBeanDefinitionPostProcessorDemo {
 	public static void main(String[] args) {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 		context.register(BeanA.class);
-		context.register(BeanB.class);
+		context.register(MyMergedBeanDefinitionPostProcessor.class);
 		context.refresh();
-		System.out.println(context.getBean(BeanA.class));
+		BeanA bean = context.getBean(BeanA.class);
+		System.out.println(bean.getName());
 	}
 }

@@ -550,6 +550,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				try {
 					// 回调 MergedBeanDefinitionPostProcessor#postProcessMergedBeanDefinition方法
 					// 允许我们扩展修改 beanDefinition，比方说做一些属性注入
+					// AutowiredAnnotationBeanPostProcessor 后处理器会寻找 @Autowired 注入点
+					// CommonAnnotationBeanPostProcessor 后处理器会寻找 @Resource 注入点
 					applyMergedBeanDefinitionPostProcessors(mbd, beanType, beanName);
 				}
 				catch (Throwable ex) {

@@ -1,19 +1,25 @@
 package com.demo6;
 
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.Scope;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Yuan
  * @description BeanA
  * @date 2022/9/5
  */
-@Scope(scopeName = BeanDefinition.SCOPE_PROTOTYPE)
 public class BeanA {
+	private String name;
 
-	private BeanB beanB;
+	public void setName(String name) {
+		this.name = name;
+	}
 
-	public BeanA(BeanB beanB) {
-		this.beanB = beanB;
+	public String getName(){
+		return this.name;
+	}
+
+	@Autowired
+	public void setMyMergedBeanDefinitionPostProcessor(MyMergedBeanDefinitionPostProcessor postProcessor){
+
 	}
 }

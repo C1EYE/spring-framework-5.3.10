@@ -16,38 +16,13 @@
 
 package org.springframework.beans.factory.annotation;
 
-import java.beans.PropertyDescriptor;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.AccessibleObject;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.PropertyValues;
 import org.springframework.beans.TypeConverter;
-import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.beans.factory.BeanFactoryUtils;
-import org.springframework.beans.factory.InjectionPoint;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.UnsatisfiedDependencyException;
+import org.springframework.beans.factory.*;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.beans.factory.config.SmartInstantiationAwareBeanPostProcessor;
@@ -67,6 +42,12 @@ import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
+
+import java.beans.PropertyDescriptor;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * {@link org.springframework.beans.factory.config.BeanPostProcessor BeanPostProcessor}
@@ -258,13 +239,17 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 	public Constructor<?>[] determineCandidateConstructors(Class<?> beanClass, final String beanName)
 			throws BeanCreationException {
 
-		// Let's check for lookup methods here...
+		// 首先检查缓存中是否存在该 beanName
+		// 如果存在说明 beanName 已经解析过 lookup 注解
 		if (!this.lookupMethodsChecked.contains(beanName)) {
+			// 如果 beanClass 是 java 开头返回 false
 			if (AnnotationUtils.isCandidateClass(beanClass, Lookup.class)) {
 				try {
 					Class<?> targetClass = beanClass;
 					do {
+						// 获取所有的方法 包含 private 方法
 						ReflectionUtils.doWithLocalMethods(targetClass, method -> {
+							// 检查方法上是否有 @Lookup 注解
 							Lookup lookup = method.getAnnotation(Lookup.class);
 							if (lookup != null) {
 								Assert.state(this.beanFactory != null, "No BeanFactory available");
@@ -280,6 +265,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 								}
 							}
 						});
+						// 递归调用父类，检查是否有 @Lookup 标注的方法
 						targetClass = targetClass.getSuperclass();
 					}
 					while (targetClass != null && targetClass != Object.class);
@@ -292,11 +278,11 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 			this.lookupMethodsChecked.add(beanName);
 		}
 
-		// Quick check on the concurrent map first, with minimal locking.
+		// 首先检查缓存中是否存在对应的构造方法
 		Constructor<?>[] candidateConstructors = this.candidateConstructorsCache.get(beanClass);
 		if (candidateConstructors == null) {
-			// Fully synchronized resolution now...
 			synchronized (this.candidateConstructorsCache) {
+				// 双检锁，再次检查缓存是否存在
 				candidateConstructors = this.candidateConstructorsCache.get(beanClass);
 				if (candidateConstructors == null) {
 					Constructor<?>[] rawCandidates;
@@ -308,23 +294,33 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 								"Resolution of declared constructors on bean Class [" + beanClass.getName() +
 								"] from ClassLoader [" + beanClass.getClassLoader() + "] failed", ex);
 					}
+					// 候选构造函数容器
 					List<Constructor<?>> candidates = new ArrayList<>(rawCandidates.length);
+					// 被 @Autowired 注解标注 且 require = true
 					Constructor<?> requiredConstructor = null;
+					// 默认的无参构造
 					Constructor<?> defaultConstructor = null;
+					// Kotlin 相关
 					Constructor<?> primaryConstructor = BeanUtils.findPrimaryConstructor(beanClass);
+					// 记录一个初始值，记录非编译器生成的构造函数数量
 					int nonSyntheticConstructors = 0;
 					for (Constructor<?> candidate : rawCandidates) {
 						if (!candidate.isSynthetic()) {
+							// 如果当前遍历的构造函数非编译器生成的 nonSyntheticConstructors 加一
 							nonSyntheticConstructors++;
 						}
 						else if (primaryConstructor != null) {
 							continue;
 						}
+						// 检查构造函数上是否有 @Autowired @Value 注解
 						MergedAnnotation<?> ann = findAutowiredAnnotation(candidate);
 						if (ann == null) {
+							// 判断是不是 CGLIB 生成的类，如果是的话返回原始类
 							Class<?> userClass = ClassUtils.getUserClass(beanClass);
 							if (userClass != beanClass) {
 								try {
+									// 再去原始类找到对应的构造方法
+									// 再检查构造函数上是否有 @Autowired @Value 注解
 									Constructor<?> superCtor =
 											userClass.getDeclaredConstructor(candidate.getParameterTypes());
 									ann = findAutowiredAnnotation(superCtor);
@@ -335,32 +331,44 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 							}
 						}
 						if (ann != null) {
+							// 如果 requiredConstructor 不等于 null
+							// 说明找到了两个 @Autowired 标注的构造函数
+							// 抛出异常，因为无法决定到底使用哪一个构造函数进行依赖注入创建对象
 							if (requiredConstructor != null) {
 								throw new BeanCreationException(beanName,
 										"Invalid autowire-marked constructor: " + candidate +
 										". Found constructor with 'required' Autowired annotation already: " +
 										requiredConstructor);
 							}
+							// 解析 @Autowired 的 require 属性
 							boolean required = determineRequiredStatus(ann);
 							if (required) {
+								// 如果找到了一个 @Autowired 属性为 true的
+								// 但是此时候选的构造函数集合又不为空，发生冲突抛异常
 								if (!candidates.isEmpty()) {
 									throw new BeanCreationException(beanName,
 											"Invalid autowire-marked constructors: " + candidates +
 											". Found constructor with 'required' Autowired annotation: " +
 											candidate);
 								}
+								// 将找到的 @Autowired require = true 的构造函数赋值
 								requiredConstructor = candidate;
 							}
+							// 添加到候选构造函数容器
 							candidates.add(candidate);
 						}
 						else if (candidate.getParameterCount() == 0) {
+							// 如果当前遍历的构造函数参数值为0，说明是无参构造函数
+							// 赋值给默认的 defaultConstructor
 							defaultConstructor = candidate;
 						}
 					}
+					// 判断候选构造函数是否为空
 					if (!candidates.isEmpty()) {
-						// Add default constructor to list of optional constructors, as fallback.
+						// 如果没有找到必须的构造函数
 						if (requiredConstructor == null) {
 							if (defaultConstructor != null) {
+								// 如果默认的不等于 null，添加进候选构造函数容器
 								candidates.add(defaultConstructor);
 							}
 							else if (candidates.size() == 1 && logger.isInfoEnabled()) {
@@ -372,6 +380,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 						}
 						candidateConstructors = candidates.toArray(new Constructor<?>[0]);
 					}
+					// 如果走到下面的 else if，说明没找到默认的，也没有找到 @Autowired 标注的
 					else if (rawCandidates.length == 1 && rawCandidates[0].getParameterCount() > 0) {
 						candidateConstructors = new Constructor<?>[] {rawCandidates[0]};
 					}
@@ -385,6 +394,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 					else {
 						candidateConstructors = new Constructor<?>[0];
 					}
+					// 将找到的构造函数放入缓存
 					this.candidateConstructorsCache.put(beanClass, candidateConstructors);
 				}
 			}
