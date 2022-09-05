@@ -6,4 +6,8 @@ package com.demo4;
  * @date 2022/9/5
  */
 public class BeanA {
+
+	public void test(){
+		System.out.println("BeanA test");
+	}
 }
