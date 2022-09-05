@@ -1583,7 +1583,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 		}
 
-		// Resolve regularly, caching the result in the BeanDefinition...
+		// 通过 beanName 加载对应的 class 对象
 		return mbd.resolveBeanClass(beanClassLoader);
 	}
 
