@@ -15,5 +15,6 @@ public class PrepareMethodOverridesDemo {
 		context.refresh();
 		BeanA beanA = context.getBean("beanA",BeanA.class);
 		beanA.test();
+		beanA.test("demo");
 	}
 }

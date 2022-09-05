@@ -4,6 +4,10 @@
 	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 	<bean id="beanA" class="com.demo4.BeanA">
 		<replaced-method name="test" replacer="beanB"/>
+		<replaced-method name="test" replacer="beanC">
+			<arg-type match="java.lang.String"></arg-type>
+		</replaced-method>
 	</bean>
 	<bean id="beanB" class="com.demo4.BeanB"/>
+	<bean id="beanC" class="com.demo4.BeanC"/>
 </beans>

@@ -472,7 +472,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		try {
-			// 方法覆盖
+			// 检查是否有方法覆盖，如果有的话检查方法覆盖是否有重载
 			mbdToUse.prepareMethodOverrides();
 		}
 		catch (BeanDefinitionValidationException ex) {
@@ -1099,8 +1099,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
 				Class<?> targetType = determineTargetType(beanName, mbd);
 				if (targetType != null) {
+					// 回调 InstantiationAwareBeanPostProcessor 接口
+					// postProcessBeforeInstantiation 方法
 					bean = applyBeanPostProcessorsBeforeInstantiation(targetType, beanName);
 					if (bean != null) {
+						// 回调 BeanPostProcessor 接口 postProcessAfterInitialization 方法
 						bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
 					}
 				}

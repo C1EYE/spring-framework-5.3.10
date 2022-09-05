@@ -10,4 +10,8 @@ public class BeanA {
 	public void test(){
 		System.out.println("BeanA test");
 	}
+
+	public void test(String str){
+		System.out.println("BeanA test "+str);
+	}
 }
