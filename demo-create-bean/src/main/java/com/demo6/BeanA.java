@@ -1,6 +1,7 @@
 package com.demo6;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 
 /**
  * @author Yuan
@@ -21,5 +22,10 @@ public class BeanA {
 	@Autowired
 	public void setMyMergedBeanDefinitionPostProcessor(MyMergedBeanDefinitionPostProcessor postProcessor){
 
+	}
+
+	@Bean
+	public BeanA beanA(){
+		return new BeanA();
 	}
 }
