@@ -1195,20 +1195,21 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 
-		// 获取所有的构造函数，包含 private 修饰的
+		// 调用 SmartInstantiationAwareBeanPostProcessor 接口 determineCandidateConstructors 获取构造函数
+		// AutowiredAnnotationBeanPostProcessor 实现了该方法，会在这里寻找是否有 @Autowired 注解标注的构造函数
 		Constructor<?>[] ctors = determineConstructorsFromBeanPostProcessors(beanClass, beanName);
 		if (ctors != null || mbd.getResolvedAutowireMode() == AUTOWIRE_CONSTRUCTOR ||
 				mbd.hasConstructorArgumentValues() || !ObjectUtils.isEmpty(args)) {
 			return autowireConstructor(beanName, mbd, ctors, args);
 		}
 
-		// Preferred constructors for default construction?
+		// 判断 BeanDefinition 是否有设置指定的构造函数
 		ctors = mbd.getPreferredConstructors();
 		if (ctors != null) {
 			return autowireConstructor(beanName, mbd, ctors, null);
 		}
 
-		// No special handling: simply use no-arg constructor.
+		// 如果以上条件都不成立，调用默认的无参构造函数
 		return instantiateBean(beanName, mbd);
 	}
 
@@ -1303,6 +1304,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 						getAccessControlContext());
 			}
 			else {
+				// 默认的无参构造实例化对象
 				beanInstance = getInstantiationStrategy().instantiate(mbd, beanName, this);
 			}
 			BeanWrapper bw = new BeanWrapperImpl(beanInstance);
