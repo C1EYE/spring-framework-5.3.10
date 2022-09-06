@@ -10,6 +10,7 @@ repositories {
 }
 
 dependencies {
+//    implementation 'org.mybatis:mybatis-spring:2.0.4'
     implementation 'org.mybatis:mybatis:3.5.6'
     implementation 'mysql:mysql-connector-java:8.0.28'
     implementation(project(":spring-context"))

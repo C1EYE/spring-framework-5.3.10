@@ -13,6 +13,6 @@ public class MybatisSpringDemo {
 	public static void main(String[] args) {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
 		UserService bean = context.getBean(UserService.class);
-//		bean.getName();
+		bean.getName();
 	}
 }

@@ -1,9 +1,10 @@
 package com.demo1.mybatis;
 
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
@@ -18,7 +19,7 @@ import java.util.Set;
  * @date 2022/9/6
  */
 public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
-	private SqlSessionFactory sqlSessionFactory;
+
 	public ClassPathMapperScanner(BeanDefinitionRegistry registry) {
 		super(registry,false);
 		// 添加一条注册规则
@@ -31,14 +32,18 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
 	}
 
-	public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
-		this.sqlSessionFactory = sqlSessionFactory;
-	}
 	@Override
 	public Set<BeanDefinitionHolder> doScan(String... basePackages) {
 		Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
-		System.out.println(beanDefinitions);
-		// TODO
+		GenericBeanDefinition definition;
+		for (BeanDefinitionHolder holder : beanDefinitions) {
+			definition = (GenericBeanDefinition) holder.getBeanDefinition();
+			String beanClassName = definition.getBeanClassName();
+			definition.getConstructorArgumentValues().addGenericArgumentValue(beanClassName);
+			definition.setBeanClass(MapperFactoryBean.class);
+			definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+		}
+
 		return beanDefinitions;
 	}
 
