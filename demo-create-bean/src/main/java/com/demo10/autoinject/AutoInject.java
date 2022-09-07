@@ -1,4 +1,4 @@
-package com.demo10;
+package com.demo10.autoinject;
 
 import java.lang.annotation.*;
 

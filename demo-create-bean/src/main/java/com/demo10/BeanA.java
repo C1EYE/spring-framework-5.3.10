@@ -1,10 +1,14 @@
 package com.demo10;
 
+import com.demo10.autoinject.AutoInject;
+import org.springframework.stereotype.Component;
+
 /**
  * @author Yuan
  * @description BeanA
  * @date 2022/9/6
  */
+@Component
 public class BeanA {
 
 	@AutoInject(required = false)

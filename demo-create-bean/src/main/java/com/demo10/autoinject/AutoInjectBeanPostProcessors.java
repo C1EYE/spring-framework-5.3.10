@@ -1,4 +1,4 @@
-package com.demo10;
+package com.demo10.autoinject;
 
 import org.springframework.beans.*;
 import org.springframework.beans.factory.BeanFactory;
