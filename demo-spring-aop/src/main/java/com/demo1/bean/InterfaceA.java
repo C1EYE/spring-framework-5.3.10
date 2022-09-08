@@ -1,4 +1,4 @@
-package com.demo1;
+package com.demo1.bean;
 
 /**
  * @author Yuan
@@ -6,5 +6,5 @@ package com.demo1;
  * @date 2022/9/6
  */
 public interface InterfaceA {
-	InterfaceA m1();
+	InterfaceA a();
 }

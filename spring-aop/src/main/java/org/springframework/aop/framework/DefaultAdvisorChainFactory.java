@@ -55,7 +55,6 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 		Boolean hasIntroductions = null;
 		for (Advisor advisor : advisors) {
 			if (advisor instanceof PointcutAdvisor) {
-				// Add it conditionally.
 				PointcutAdvisor pointcutAdvisor = (PointcutAdvisor) advisor;
 				// 获取当前 Advisor 的 Pointcut 类型匹配器，进行 Class 匹配
 				if (config.isPreFiltered() || pointcutAdvisor.getPointcut().getClassFilter().matches(actualClass)) {
