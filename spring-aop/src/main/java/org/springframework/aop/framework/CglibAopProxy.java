@@ -16,46 +16,26 @@
 
 package org.springframework.aop.framework;
 
-import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.UndeclaredThrowableException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
-
 import org.aopalliance.aop.Advice;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.springframework.aop.Advisor;
-import org.springframework.aop.AopInvocationException;
-import org.springframework.aop.PointcutAdvisor;
-import org.springframework.aop.RawTargetAccess;
-import org.springframework.aop.TargetSource;
+import org.springframework.aop.*;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.cglib.core.ClassLoaderAwareGeneratorStrategy;
 import org.springframework.cglib.core.CodeGenerationException;
 import org.springframework.cglib.core.SpringNamingPolicy;
-import org.springframework.cglib.proxy.Callback;
-import org.springframework.cglib.proxy.CallbackFilter;
-import org.springframework.cglib.proxy.Dispatcher;
-import org.springframework.cglib.proxy.Enhancer;
-import org.springframework.cglib.proxy.Factory;
-import org.springframework.cglib.proxy.MethodInterceptor;
-import org.springframework.cglib.proxy.MethodProxy;
-import org.springframework.cglib.proxy.NoOp;
+import org.springframework.cglib.proxy.*;
 import org.springframework.core.KotlinDetector;
 import org.springframework.core.SmartClassLoader;
 import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
-import org.springframework.util.ReflectionUtils;
+import org.springframework.util.*;
+
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.UndeclaredThrowableException;
+import java.util.*;
 
 /**
  * CGLIB-based {@link AopProxy} implementation for the Spring AOP framework.
@@ -383,7 +363,9 @@ class CglibAopProxy implements AopProxy, Serializable {
 	private static Object processReturnType(
 			Object proxy, @Nullable Object target, Method method, @Nullable Object returnValue) {
 
-		// Massage return value if necessary
+		// 如果方法的返回值是类型是和被代理对象的类型一样
+		// 如果方法所在的类的没有实现 RawTargetAccess 接口，那么返回 this 返回的就是代理对象
+		// 反之返回目标原始对象
 		if (returnValue != null && returnValue == target &&
 				!RawTargetAccess.class.isAssignableFrom(method.getDeclaringClass())) {
 			// Special case: it returned "this". Note that we can't help
@@ -391,6 +373,8 @@ class CglibAopProxy implements AopProxy, Serializable {
 			returnValue = proxy;
 		}
 		Class<?> returnType = method.getReturnType();
+		// 如果返回值不为等于 null，但是方法的返回值又不是 void，且方法的返回值是基本数据类型 int long 这种
+		// 那么抛出异常
 		if (returnValue == null && returnType != Void.TYPE && returnType.isPrimitive()) {
 			throw new AopInvocationException(
 					"Null return value from advice does not match primitive return type for: " + method);
@@ -665,32 +649,34 @@ class CglibAopProxy implements AopProxy, Serializable {
 			Object oldProxy = null;
 			boolean setProxyContext = false;
 			Object target = null;
+			// 将当前的被代理对象包装成 TargetSource,而不是直接引用被代理对象
 			TargetSource targetSource = this.advised.getTargetSource();
 			try {
+				// 判断是不是需要将当前代理对象放入 ThreadLocal
+				// 可以通过 AopContext.currentProxy() 获取当前代理对象
 				if (this.advised.exposeProxy) {
 					// Make invocation available if necessary.
 					oldProxy = AopContext.setCurrentProxy(proxy);
 					setProxyContext = true;
 				}
-				// Get as late as possible to minimize the time we "own" the target, in case it comes from a pool...
+				// 获取被代理对象
 				target = targetSource.getTarget();
+				// 获取被代理对象的 Class
 				Class<?> targetClass = (target != null ? target.getClass() : null);
+				// 获取所有与当前对象的方法所匹配的 Advice，形成一条调用链
 				List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
 				Object retVal;
-				// Check whether we only have one InvokerInterceptor: that is,
-				// no real advice, but just reflective invocation of the target.
+				// 检查是否有方法拦截器可执行，并且方法是公开可访问的
 				if (chain.isEmpty() && Modifier.isPublic(method.getModifiers())) {
-					// We can skip creating a MethodInvocation: just invoke the target directly.
-					// Note that the final invoker must be an InvokerInterceptor, so we know
-					// it does nothing but a reflective operation on the target, and no hot
-					// swapping or fancy proxying.
+					// 如果没找到对应的方法拦截器可以使用，那么直接反射调用目标方法
 					Object[] argsToUse = AopProxyUtils.adaptArgumentsIfNecessary(method, args);
 					retVal = methodProxy.invoke(target, argsToUse);
 				}
 				else {
-					// We need to create a method invocation...
+					// 创建一个 MethodInvocation 递归调用方法拦截器
 					retVal = new CglibMethodInvocation(proxy, target, method, args, targetClass, chain, methodProxy).proceed();
 				}
+				// 处理返回值
 				retVal = processReturnType(proxy, target, method, retVal);
 				return retVal;
 			}
@@ -736,7 +722,8 @@ class CglibAopProxy implements AopProxy, Serializable {
 
 			super(proxy, target, method, arguments, targetClass, interceptorsAndDynamicMethodMatchers);
 
-			// Only use method proxy for public methods not derived from java.lang.Object
+			// 判断方法是不是公开允许访问的，且方法所在类不是 Object.class
+			// equals hashCode toString 不进行代理拦截 methodProxy = null
 			this.methodProxy = (Modifier.isPublic(method.getModifiers()) &&
 					method.getDeclaringClass() != Object.class && !AopUtils.isEqualsMethod(method) &&
 					!AopUtils.isHashCodeMethod(method) && !AopUtils.isToStringMethod(method) ?
@@ -747,6 +734,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 		@Nullable
 		public Object proceed() throws Throwable {
 			try {
+				// 调用父类的
 				return super.proceed();
 			}
 			catch (RuntimeException ex) {

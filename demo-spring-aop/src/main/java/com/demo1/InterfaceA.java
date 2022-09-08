@@ -6,5 +6,5 @@ package com.demo1;
  * @date 2022/9/6
  */
 public interface InterfaceA {
-	void m1();
+	InterfaceA m1();
 }
