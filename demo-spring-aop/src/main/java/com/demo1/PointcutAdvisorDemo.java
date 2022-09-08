@@ -1,12 +1,15 @@
 package com.demo1;
 
-import com.demo1.advice.MyAfterReturningAdvice;
-import com.demo1.advice.MyMethodBeforeAdvice;
-import com.demo1.advice.MyMethodInterceptor;
-import com.demo1.advice.MyThrowsAdvice;
+import com.demo1.advice.*;
 import com.demo1.bean.BeanA;
-import com.demo1.bean.InterfaceA;
+import org.aopalliance.aop.Advice;
+import org.springframework.aop.ClassFilter;
+import org.springframework.aop.MethodMatcher;
+import org.springframework.aop.Pointcut;
+import org.springframework.aop.PointcutAdvisor;
 import org.springframework.aop.framework.ProxyFactory;
+
+import java.lang.reflect.Method;
 
 /**
  * @author Yuan
@@ -17,12 +20,48 @@ public class PointcutAdvisorDemo {
 	public static void main(String[] args) {
 		BeanA beanA = new BeanA();
 		ProxyFactory factory = new ProxyFactory(beanA);
-		factory.addAdvice(new MyAfterReturningAdvice());
-		factory.addAdvice(new MyMethodBeforeAdvice());
-		factory.addAdvice(new MyMethodInterceptor());
-		factory.addAdvice(new MyThrowsAdvice());
-		factory.setProxyTargetClass(true);
-		InterfaceA proxy = (InterfaceA) factory.getProxy();
+		factory.addAdvisor(new PointcutAdvisor() {
+			@Override
+			public Pointcut getPointcut() {
+				return new Pointcut() {
+					@Override
+					public ClassFilter getClassFilter() {
+						return clazz -> clazz.isAssignableFrom(BeanA.class);
+					}
+
+					@Override
+					public MethodMatcher getMethodMatcher() {
+						return new MethodMatcher() {
+							@Override
+							public boolean matches(Method method, Class<?> targetClass) {
+								return "a".equals(method.getName());
+							}
+
+							@Override
+							public boolean isRuntime() {
+								return false;
+							}
+
+							@Override
+							public boolean matches(Method method, Class<?> targetClass, Object... args) {
+								return false;
+							}
+						};
+					}
+				};
+			}
+
+			@Override
+			public Advice getAdvice() {
+				return new MyMethodBeforeAdvice();
+			}
+
+			@Override
+			public boolean isPerInstance() {
+				return false;
+			}
+		});
+		BeanA proxy = (BeanA) factory.getProxy();
 		proxy.a();
 	}
 }

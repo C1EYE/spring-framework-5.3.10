@@ -14,14 +14,14 @@ import org.springframework.aop.support.DefaultIntroductionAdvisor;
  * @date 2022/9/8
  */
 public class IntroductionAdvisor {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 		BeanA beanA = new BeanA();
 		ProxyFactory factory = new ProxyFactory(beanA);
 		DynamicIntroductionAdvice advice = new MyIntroductionInterceptor();
 		Advisor advisor = new DefaultIntroductionAdvisor(advice, InterfaceB.class);
 		factory.addAdvisor(advisor);
-		factory.setProxyTargetClass(false);
 		InterfaceB proxy = (InterfaceB) factory.getProxy();
 		proxy.b();
+		Thread.sleep(10000000000000L);
 	}
 }

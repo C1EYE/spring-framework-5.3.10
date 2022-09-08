@@ -8,11 +8,12 @@ import org.springframework.stereotype.Component;
  * @date 2022/9/6
  */
 @Component
-public class BeanA implements InterfaceA {
+public class BeanA implements InterfaceA{
 
 	@Override
-	public InterfaceA a() {
+	public BeanA a() {
 		System.out.println("BeanA::a()方法执行");
 		return this;
 	}
+
 }
