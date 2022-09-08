@@ -14,7 +14,7 @@ import org.springframework.aop.support.DefaultIntroductionAdvisor;
  * @date 2022/9/8
  */
 public class IntroductionAdvisor {
-	public static void main(String[] args){
+	public static void main(String[] args) {
 		BeanA beanA = new BeanA();
 		ProxyFactory factory = new ProxyFactory(beanA);
 		DynamicIntroductionAdvice advice = new MyIntroductionInterceptor();
