@@ -143,10 +143,12 @@ class CglibAopProxy implements AopProxy, Serializable {
 		}
 
 		try {
+			// 获取被代理对象 class 类型
 			Class<?> rootClass = this.advised.getTargetClass();
 			Assert.state(rootClass != null, "Target class must be available for creating a CGLIB proxy");
-
+			// 定义代理对象的父类型
 			Class<?> proxySuperClass = rootClass;
+			// 判断 rootClass 名字是否包含 $$ 符号
 			if (rootClass.getName().contains(ClassUtils.CGLIB_CLASS_SEPARATOR)) {
 				proxySuperClass = rootClass.getSuperclass();
 				Class<?>[] additionalInterfaces = rootClass.getInterfaces();
@@ -155,7 +157,8 @@ class CglibAopProxy implements AopProxy, Serializable {
 				}
 			}
 
-			// Validate the class, writing log messages as necessary.
+			// 被代理类做一些方法校验，比方说检查方法是否为 private static final
+			// 如果有的话会输出一些日志警告信息
 			validateClassIfNecessary(proxySuperClass, classLoader);
 
 			// Configure CGLIB Enhancer...
@@ -167,9 +170,13 @@ class CglibAopProxy implements AopProxy, Serializable {
 					enhancer.setUseCache(false);
 				}
 			}
+			// 设置代理对象的父类
 			enhancer.setSuperclass(proxySuperClass);
+			// 设置代理对象要实现的接口
 			enhancer.setInterfaces(AopProxyUtils.completeProxiedInterfaces(this.advised));
+			// 设置一个代理对象名字生成器
 			enhancer.setNamingPolicy(SpringNamingPolicy.INSTANCE);
+			// 设置一个类加载器生成策略类
 			enhancer.setStrategy(new ClassLoaderAwareGeneratorStrategy(classLoader));
 
 			Callback[] callbacks = getCallbacks(rootClass);
@@ -219,6 +226,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 	private void validateClassIfNecessary(Class<?> proxySuperClass, @Nullable ClassLoader proxyClassLoader) {
 		if (logger.isWarnEnabled()) {
 			synchronized (validatedClasses) {
+				// 判断是否存在，如果存在就不需要添加了
 				if (!validatedClasses.containsKey(proxySuperClass)) {
 					doValidateClass(proxySuperClass, proxyClassLoader,
 							ClassUtils.getAllInterfacesForClassAsSet(proxySuperClass));

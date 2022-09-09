@@ -2,6 +2,7 @@ package com.demo1.advice;
 
 import com.demo1.bean.InterfaceB;
 import org.aopalliance.intercept.MethodInvocation;
+import org.springframework.aop.IntroductionInfo;
 import org.springframework.aop.IntroductionInterceptor;
 
 import javax.annotation.Nonnull;
@@ -12,7 +13,7 @@ import javax.annotation.Nullable;
  * @description MyIntroductionInterceptor
  * @date 2022/9/8
  */
-public class MyIntroductionInterceptor implements IntroductionInterceptor, InterfaceB {
+public class MyIntroductionInterceptor implements IntroductionInterceptor, InterfaceB, IntroductionInfo {
 	@Nullable
 	@Override
 	public Object invoke(@Nonnull MethodInvocation invocation) throws Throwable {
@@ -31,5 +32,10 @@ public class MyIntroductionInterceptor implements IntroductionInterceptor, Inter
 	public InterfaceB b() {
 		System.out.println("MyIntroductionInterceptor::b()方法执行");
 		return this;
+	}
+
+	@Override
+	public Class<?>[] getInterfaces() {
+		return new Class[]{InterfaceB.class};
 	}
 }

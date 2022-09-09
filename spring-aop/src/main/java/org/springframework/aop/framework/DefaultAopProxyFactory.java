@@ -16,11 +16,11 @@
 
 package org.springframework.aop.framework;
 
-import java.io.Serializable;
-import java.lang.reflect.Proxy;
-
 import org.springframework.aop.SpringProxy;
 import org.springframework.core.NativeDetector;
+
+import java.io.Serializable;
+import java.lang.reflect.Proxy;
 
 /**
  * Default {@link AopProxyFactory} implementation, creating either a CGLIB proxy
@@ -51,6 +51,10 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 
 	@Override
 	public AopProxy createAopProxy(AdvisedSupport config) throws AopConfigException {
+		// NativeDetector.inNativeImage() 如果虚拟机环境是 GraalVM，那么使用JDK动态代理
+		// config.isOptimize() 判断是否开启性能优化，默认false
+		// config.isProxyTargetClass() 判断是否使用 CGlib，如果返回 true，使用 CGLIB
+		// hasNoUserSuppliedProxyInterfaces(config) 判断是否没有实现接口，如果没有使用CGLIB
 		if (!NativeDetector.inNativeImage() &&
 				(config.isOptimize() || config.isProxyTargetClass() || hasNoUserSuppliedProxyInterfaces(config))) {
 			Class<?> targetClass = config.getTargetClass();

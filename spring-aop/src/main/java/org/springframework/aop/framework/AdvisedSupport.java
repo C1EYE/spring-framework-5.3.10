@@ -376,15 +376,15 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	public void addAdvice(int pos, Advice advice) throws AopConfigException {
 		Assert.notNull(advice, "Advice must not be null");
 		if (advice instanceof IntroductionInfo) {
-			// We don't need an IntroductionAdvisor for this kind of introduction:
-			// It's fully self-describing.
+			// 如果 advice 实现了 IntroductionInfo 接口
+			// 包装成一个 DefaultIntroductionAdvisor
 			addAdvisor(pos, new DefaultIntroductionAdvisor(advice, (IntroductionInfo) advice));
 		}
 		else if (advice instanceof DynamicIntroductionAdvice) {
-			// We need an IntroductionAdvisor for this kind of introduction.
 			throw new AopConfigException("DynamicIntroductionAdvice may only be added as part of IntroductionAdvisor");
 		}
 		else {
+			// 当上面的条件不满足，包装成一个 DefaultPointcutAdvisor
 			addAdvisor(pos, new DefaultPointcutAdvisor(advice));
 		}
 	}
