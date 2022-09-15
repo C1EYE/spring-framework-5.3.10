@@ -59,4 +59,5 @@ include 'demo-spring-start'
 include 'demo-create-bean'
 include 'demo-mybatis-spring'
 include 'demo-spring-aop'
+include 'demo-spring-tx'
 
