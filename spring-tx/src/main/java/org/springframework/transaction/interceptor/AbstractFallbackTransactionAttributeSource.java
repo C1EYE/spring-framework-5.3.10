@@ -16,20 +16,19 @@
 
 package org.springframework.transaction.interceptor;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.EmbeddedValueResolverAware;
 import org.springframework.core.MethodClassKey;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringValueResolver;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Abstract implementation of {@link TransactionAttributeSource} that caches
@@ -102,16 +101,16 @@ public abstract class AbstractFallbackTransactionAttributeSource
 	@Override
 	@Nullable
 	public TransactionAttribute getTransactionAttribute(Method method, @Nullable Class<?> targetClass) {
+		// 如果方法所在的类为 Object 直接返回 null
 		if (method.getDeclaringClass() == Object.class) {
 			return null;
 		}
 
-		// First, see if we have a cached value.
+		// 先检查缓存是否存在
 		Object cacheKey = getCacheKey(method, targetClass);
 		TransactionAttribute cached = this.attributeCache.get(cacheKey);
 		if (cached != null) {
-			// Value will either be canonical value indicating there is no transaction attribute,
-			// or an actual transaction attribute.
+			// 这里类似一个于空缓存，代表这个方法已经解析过了，就是不存在期望的值
 			if (cached == NULL_TRANSACTION_ATTRIBUTE) {
 				return null;
 			}
@@ -120,16 +119,18 @@ public abstract class AbstractFallbackTransactionAttributeSource
 			}
 		}
 		else {
-			// We need to work it out.
+			// 缓存不存在。进一步解析
 			TransactionAttribute txAttr = computeTransactionAttribute(method, targetClass);
-			// Put it in the cache.
 			if (txAttr == null) {
+				// 如果解析过后为 null，缓存一个空对象
 				this.attributeCache.put(cacheKey, NULL_TRANSACTION_ATTRIBUTE);
 			}
 			else {
+				// 生成全限定类名加方法名
 				String methodIdentification = ClassUtils.getQualifiedMethodName(method, targetClass);
 				if (txAttr instanceof DefaultTransactionAttribute) {
 					DefaultTransactionAttribute dta = (DefaultTransactionAttribute) txAttr;
+					// 设置事务属性的描述信息
 					dta.setDescriptor(methodIdentification);
 					dta.resolveAttributeStrings(this.embeddedValueResolver);
 				}
@@ -168,29 +169,29 @@ public abstract class AbstractFallbackTransactionAttributeSource
 			return null;
 		}
 
-		// The method may be on an interface, but we need attributes from the target class.
-		// If the target class is null, the method will be unchanged.
+		// 如果该方法来自接口，寻找接口实现类的方法
 		Method specificMethod = AopUtils.getMostSpecificMethod(method, targetClass);
 
-		// First try is the method in the target class.
+		// 抽象方法留给子类扩展，先寻找方法是否存在事务注解
 		TransactionAttribute txAttr = findTransactionAttribute(specificMethod);
 		if (txAttr != null) {
 			return txAttr;
 		}
 
-		// Second try is the transaction attribute on the target class.
+		// 如果方法上未找到事务注解，那么就尝试去方法所在的类上寻找注解
 		txAttr = findTransactionAttribute(specificMethod.getDeclaringClass());
 		if (txAttr != null && ClassUtils.isUserLevelMethod(method)) {
 			return txAttr;
 		}
 
+		// 如果具体的方法（可能是接口实现类的方法）不等于原方法
 		if (specificMethod != method) {
-			// Fallback is to look at the original method.
+			// 再去原方法寻找事务注解
 			txAttr = findTransactionAttribute(method);
 			if (txAttr != null) {
 				return txAttr;
 			}
-			// Last fallback is the class of the original method.
+			// 如果原方法没找到，去原方法所在类找事务注解
 			txAttr = findTransactionAttribute(method.getDeclaringClass());
 			if (txAttr != null && ClassUtils.isUserLevelMethod(method)) {
 				return txAttr;
