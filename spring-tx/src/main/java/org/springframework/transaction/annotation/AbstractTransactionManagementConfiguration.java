@@ -16,8 +16,6 @@
 
 package org.springframework.transaction.annotation;
 
-import java.util.Collection;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
@@ -31,6 +29,8 @@ import org.springframework.transaction.TransactionManager;
 import org.springframework.transaction.config.TransactionManagementConfigUtils;
 import org.springframework.transaction.event.TransactionalEventListenerFactory;
 import org.springframework.util.CollectionUtils;
+
+import java.util.Collection;
 
 /**
  * Abstract base {@code @Configuration} class providing common structure for enabling
@@ -56,6 +56,7 @@ public abstract class AbstractTransactionManagementConfiguration implements Impo
 
 	@Override
 	public void setImportMetadata(AnnotationMetadata importMetadata) {
+		// 获取 EnableTransactionManagement 的属性值保存到 enableTx 这个成员变量上
 		this.enableTx = AnnotationAttributes.fromMap(
 				importMetadata.getAnnotationAttributes(EnableTransactionManagement.class.getName(), false));
 		if (this.enableTx == null) {
@@ -66,6 +67,7 @@ public abstract class AbstractTransactionManagementConfiguration implements Impo
 
 	@Autowired(required = false)
 	void setConfigurers(Collection<TransactionManagementConfigurer> configurers) {
+		// 支持多个事务管理器注入
 		if (CollectionUtils.isEmpty(configurers)) {
 			return;
 		}
