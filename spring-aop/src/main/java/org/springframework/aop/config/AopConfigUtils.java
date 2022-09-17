@@ -16,9 +16,6 @@
 
 package org.springframework.aop.config;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.aop.aspectj.annotation.AnnotationAwareAspectJAutoProxyCreator;
 import org.springframework.aop.aspectj.autoproxy.AspectJAwareAdvisorAutoProxyCreator;
 import org.springframework.aop.framework.autoproxy.InfrastructureAdvisorAutoProxyCreator;
@@ -28,6 +25,9 @@ import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.core.Ordered;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Utility class for handling registration of AOP auto-proxy creators.
@@ -119,19 +119,25 @@ public abstract class AopConfigUtils {
 			Class<?> cls, BeanDefinitionRegistry registry, @Nullable Object source) {
 
 		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
-
+		// 先判断容器内是否有该 org.springframework.aop.config.internalAutoProxyCreator beanDefinition
 		if (registry.containsBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME)) {
+			// 如果有的话，就获取已经存在的
 			BeanDefinition apcDefinition = registry.getBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME);
+			// 判断待注册的和已经存在的 class 类型是否一样
 			if (!cls.getName().equals(apcDefinition.getBeanClassName())) {
+				// 如果不一样，获取已经存在的 beanDefinition 优先级
 				int currentPriority = findPriorityForClass(apcDefinition.getBeanClassName());
+				// 获取待注册的 beanDefinition 优先级
 				int requiredPriority = findPriorityForClass(cls);
+				// 如果待注册的优先级数值大于已存在的优先级数值
 				if (currentPriority < requiredPriority) {
+					// 那么待注册的覆盖已经注册的
 					apcDefinition.setBeanClassName(cls.getName());
 				}
 			}
 			return null;
 		}
-
+		// 容器不存在，直接注册
 		RootBeanDefinition beanDefinition = new RootBeanDefinition(cls);
 		beanDefinition.setSource(source);
 		beanDefinition.getPropertyValues().add("order", Ordered.HIGHEST_PRECEDENCE);

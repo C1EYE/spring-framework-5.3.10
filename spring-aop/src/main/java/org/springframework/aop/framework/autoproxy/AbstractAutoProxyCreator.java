@@ -443,29 +443,34 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		ProxyFactory proxyFactory = new ProxyFactory();
 		// 复制一些属性比方说 proxyTargetClass exposeProxy
 		proxyFactory.copyFrom(this);
-
+		// 判断强制是否使用 CGLIB
 		if (proxyFactory.isProxyTargetClass()) {
-			// Explicit handling of JDK proxy targets (for introduction advice scenarios)
+			// 判断 beanClass 是不是一个代理类
 			if (Proxy.isProxyClass(beanClass)) {
-				// Must allow for introductions; can't just set interfaces to the proxy's interfaces only.
+				// 获取 beanClass 的所有接口添加到 proxyFactory
 				for (Class<?> ifc : beanClass.getInterfaces()) {
 					proxyFactory.addInterface(ifc);
 				}
 			}
 		}
 		else {
-			// No proxyTargetClass flag enforced, let's apply our default checks...
+			// 外部虽然没有设置 ProxyTargetClass 为 ture
+			// 但这里还是会去检查 beanDefinition 上是否有将 preserveTargetClass 设置 true
 			if (shouldProxyTargetClass(beanClass, beanName)) {
 				proxyFactory.setProxyTargetClass(true);
 			}
 			else {
+				// 检查 beanClass 是否有实现接口
+				// 如果没有实现的话设置 ProxyTargetClass 为 true
 				evaluateProxyInterfaces(beanClass, proxyFactory);
 			}
 		}
-
+		// 将 specificInterceptors 保存的 advisor 转换成 Advisor 接口类型数组
 		Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);
 		proxyFactory.addAdvisors(advisors);
+		// 设置被代理目标对象
 		proxyFactory.setTargetSource(targetSource);
+		// 留给子类扩展的方法 在生成代理对象前，对 proxyFactory 做一些调整
 		customizeProxyFactory(proxyFactory);
 
 		proxyFactory.setFrozen(this.freezeProxy);
@@ -473,7 +478,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			proxyFactory.setPreFiltered(true);
 		}
 
-		// Use original ClassLoader if bean class not locally loaded in overriding class loader
+		// 使用类加载器创建代理对象
 		ClassLoader classLoader = getProxyClassLoader();
 		if (classLoader instanceof SmartClassLoader && classLoader != beanClass.getClassLoader()) {
 			classLoader = ((SmartClassLoader) classLoader).getOriginalClassLoader();

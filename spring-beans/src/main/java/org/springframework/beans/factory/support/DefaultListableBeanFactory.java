@@ -919,6 +919,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					}, getAccessControlContext());
 				}
 				else {
+					// EventListenerMethodProcessor 会在这里找到所有的监听器并管理
 					smartSingleton.afterSingletonsInstantiated();
 				}
 				smartInitialize.end();

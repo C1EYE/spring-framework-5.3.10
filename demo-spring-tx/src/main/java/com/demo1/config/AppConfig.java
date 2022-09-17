@@ -20,7 +20,7 @@ import javax.sql.DataSource;
 @Configuration
 @ComponentScan("com.demo1")
 @MapperScan("com.demo1.mapper")
-@EnableTransactionManagement
+@EnableTransactionManagement(proxyTargetClass = false)
 public class AppConfig {
 
 	@Bean
