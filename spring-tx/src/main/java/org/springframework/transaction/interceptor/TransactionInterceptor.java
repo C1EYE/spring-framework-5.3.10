@@ -16,20 +16,19 @@
 
 package org.springframework.transaction.interceptor;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.util.Properties;
-
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
-
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.lang.Nullable;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionManager;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.Properties;
 
 /**
  * AOP Alliance MethodInterceptor for declarative transaction
@@ -120,14 +119,17 @@ public class TransactionInterceptor extends TransactionAspectSupport implements 
 			@Override
 			@Nullable
 			public Object proceedWithInvocation() throws Throwable {
+				// 执行下一个切面
 				return invocation.proceed();
 			}
 			@Override
 			public Object getTarget() {
+				// 返回当前被代理对象
 				return invocation.getThis();
 			}
 			@Override
 			public Object[] getArguments() {
+				// 返回当前被代理方法参数
 				return invocation.getArguments();
 			}
 		});
