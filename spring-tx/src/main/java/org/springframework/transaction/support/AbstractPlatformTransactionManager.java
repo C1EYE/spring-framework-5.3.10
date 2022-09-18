@@ -917,6 +917,7 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 			}
 		}
 		finally {
+			// 释放数据库连接
 			cleanupAfterCompletion(status);
 		}
 	}
@@ -1032,7 +1033,7 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 		// 设置事务状态未已完成
 		status.setCompleted();
 		if (status.isNewSynchronization()) {
-			// 清楚 ThreadLocal
+			// 清除 ThreadLocal
 			TransactionSynchronizationManager.clear();
 		}
 		if (status.isNewTransaction()) {
