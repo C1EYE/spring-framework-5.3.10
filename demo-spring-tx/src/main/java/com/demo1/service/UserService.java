@@ -19,16 +19,20 @@ public class UserService implements IUserService{
 	private UserMapper userMapper;
 
 	@Override
-	@Transactional
+	@Transactional(rollbackFor = NullPointerException.class)
 	public void m1(){
 		userMapper.insert("m1");
 		UserService proxy = (UserService)AopContext.currentProxy();
-		proxy.m2();
+		try {
+			proxy.m2();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public void m2(){
 		userMapper.insert("m2");
-		throw new RuntimeException();
+//		throw new RuntimeException();
 	}
 }

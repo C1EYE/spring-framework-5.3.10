@@ -16,11 +16,11 @@
 
 package org.springframework.transaction.interceptor;
 
+import org.springframework.lang.Nullable;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.springframework.lang.Nullable;
 
 /**
  * TransactionAttribute implementation that works out whether a given exception
@@ -136,7 +136,8 @@ public class RuleBasedTransactionAttribute extends DefaultTransactionAttribute i
 			}
 		}
 
-		// User superclass behavior (rollback on unchecked) if no rule matches.
+		// 如果我们没有匹配到该异常，则会调用父类的异常匹配规则来匹配
+		// 而父类的异常规则就是 RuntimeException 或者  Error
 		if (winner == null) {
 			return super.rollbackOn(ex);
 		}

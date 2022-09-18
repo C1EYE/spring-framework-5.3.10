@@ -374,15 +374,16 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 
 			Object retVal;
 			try {
-				// 执行调用链中的下一个，比如说明目标方法
+				// 执行调用链中的下一个，比如说目标方法
 				retVal = invocation.proceedWithInvocation();
 			}
 			catch (Throwable ex) {
-				// 目标方法执行发生异常，回滚
+				// 目标方法执行发生异常，回滚事务
 				completeTransactionAfterThrowing(txInfo, ex);
 				throw ex;
 			}
 			finally {
+				// 恢复旧的 TransactionInfo
 				cleanupTransactionInfo(txInfo);
 			}
 
@@ -393,7 +394,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 					retVal = VavrDelegate.evaluateTryFailure(retVal, txAttr, status);
 				}
 			}
-			// 目标方法执行成功，提交
+			// 目标方法执行成功，提交事务
 			commitTransactionAfterReturning(txInfo);
 			return retVal;
 		}
@@ -630,9 +631,8 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			}
 		}
 
-		// We always bind the TransactionInfo to the thread, even if we didn't create
-		// a new transaction here. This guarantees that the TransactionInfo stack
-		// will be managed correctly even if no transaction was created by this aspect.
+		// 将旧的 TransactionInfo 从 ThreadLocal 获取出来保存
+		// 将当前新的 TransactionInfo 存储到 ThreadLocal
 		txInfo.bindToThread();
 		return txInfo;
 	}
@@ -647,6 +647,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			if (logger.isTraceEnabled()) {
 				logger.trace("Completing transaction for [" + txInfo.getJoinpointIdentification() + "]");
 			}
+			// 获取数据库连接管理对象调用来提交事务
 			txInfo.getTransactionManager().commit(txInfo.getTransactionStatus());
 		}
 	}
@@ -663,8 +664,11 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 				logger.trace("Completing transaction for [" + txInfo.getJoinpointIdentification() +
 						"] after exception: " + ex);
 			}
+			// txInfo.transactionAttribute.rollbackOn(ex) 判断当前抛出的异常是否能被支持回滚
+			// 这里的 txInfo.transactionAttribute => RuleBasedTransactionAttribute
 			if (txInfo.transactionAttribute != null && txInfo.transactionAttribute.rollbackOn(ex)) {
 				try {
+					// 回滚事务
 					txInfo.getTransactionManager().rollback(txInfo.getTransactionStatus());
 				}
 				catch (TransactionSystemException ex2) {

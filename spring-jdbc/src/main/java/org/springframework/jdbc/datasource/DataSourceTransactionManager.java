@@ -371,12 +371,12 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 	protected void doCleanupAfterCompletion(Object transaction) {
 		DataSourceTransactionObject txObject = (DataSourceTransactionObject) transaction;
 
-		// Remove the connection holder from the thread, if exposed.
+		// 将数据库连接对象从 ThreadLocal 移除
 		if (txObject.isNewConnectionHolder()) {
 			TransactionSynchronizationManager.unbindResource(obtainDataSource());
 		}
 
-		// Reset connection.
+		// 重新设置连接对象的 AutoCommit ReadOnly 数据库隔离级别
 		Connection con = txObject.getConnectionHolder().getConnection();
 		try {
 			if (txObject.isMustRestoreAutoCommit()) {
@@ -393,9 +393,10 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 			if (logger.isDebugEnabled()) {
 				logger.debug("Releasing JDBC Connection [" + con + "] after transaction");
 			}
+			// 是否数据库连接
 			DataSourceUtils.releaseConnection(con, this.dataSource);
 		}
-
+		// 清楚 ConnectionHolder
 		txObject.getConnectionHolder().clear();
 	}
 
