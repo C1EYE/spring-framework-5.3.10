@@ -1,7 +1,7 @@
 package com.demo1;
 
 import com.demo1.config.AppConfig;
-import com.demo1.service.IUserService;
+import com.demo1.service.UserService;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 /**
@@ -12,7 +12,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 public class TransactionalDemo {
 	public static void main(String[] args) {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
-		IUserService userService = (IUserService) context.getBean("userService");
-		userService.m1();
+		UserService userService = (UserService) context.getBean("userService");
+		userService.a();
 	}
 }
