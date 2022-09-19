@@ -16,21 +16,16 @@
 
 package org.springframework.web;
 
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.Set;
+import org.springframework.core.annotation.AnnotationAwareOrderComparator;
+import org.springframework.lang.Nullable;
+import org.springframework.util.ReflectionUtils;
 
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.HandlesTypes;
-
-import org.springframework.core.annotation.AnnotationAwareOrderComparator;
-import org.springframework.lang.Nullable;
-import org.springframework.util.ReflectionUtils;
+import java.lang.reflect.Modifier;
+import java.util.*;
 
 /**
  * Servlet 3.0 {@link ServletContainerInitializer} designed to support code-based
@@ -113,32 +108,6 @@ import org.springframework.util.ReflectionUtils;
 @HandlesTypes(WebApplicationInitializer.class)
 public class SpringServletContainerInitializer implements ServletContainerInitializer {
 
-	/**
-	 * Delegate the {@code ServletContext} to any {@link WebApplicationInitializer}
-	 * implementations present on the application classpath.
-	 * <p>Because this class declares @{@code HandlesTypes(WebApplicationInitializer.class)},
-	 * Servlet 3.0+ containers will automatically scan the classpath for implementations
-	 * of Spring's {@code WebApplicationInitializer} interface and provide the set of all
-	 * such types to the {@code webAppInitializerClasses} parameter of this method.
-	 * <p>If no {@code WebApplicationInitializer} implementations are found on the classpath,
-	 * this method is effectively a no-op. An INFO-level log message will be issued notifying
-	 * the user that the {@code ServletContainerInitializer} has indeed been invoked but that
-	 * no {@code WebApplicationInitializer} implementations were found.
-	 * <p>Assuming that one or more {@code WebApplicationInitializer} types are detected,
-	 * they will be instantiated (and <em>sorted</em> if the @{@link
-	 * org.springframework.core.annotation.Order @Order} annotation is present or
-	 * the {@link org.springframework.core.Ordered Ordered} interface has been
-	 * implemented). Then the {@link WebApplicationInitializer#onStartup(ServletContext)}
-	 * method will be invoked on each instance, delegating the {@code ServletContext} such
-	 * that each instance may register and configure servlets such as Spring's
-	 * {@code DispatcherServlet}, listeners such as Spring's {@code ContextLoaderListener},
-	 * or any other Servlet API componentry such as filters.
-	 * @param webAppInitializerClasses all implementations of
-	 * {@link WebApplicationInitializer} found on the application classpath
-	 * @param servletContext the servlet context to be initialized
-	 * @see WebApplicationInitializer#onStartup(ServletContext)
-	 * @see AnnotationAwareOrderComparator
-	 */
 	@Override
 	public void onStartup(@Nullable Set<Class<?>> webAppInitializerClasses, ServletContext servletContext)
 			throws ServletException {
