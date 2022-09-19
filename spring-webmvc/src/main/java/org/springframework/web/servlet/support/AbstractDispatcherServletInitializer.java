@@ -60,7 +60,9 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 
 	@Override
 	public void onStartup(ServletContext servletContext) throws ServletException {
+		// 创建父容器
 		super.onStartup(servletContext);
+		// 创建子容器，并注册 DispatcherServlet 到 Servlet 容器
 		registerDispatcherServlet(servletContext);
 	}
 
@@ -76,16 +78,22 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 	 * @param servletContext the context to register the servlet against
 	 */
 	protected void registerDispatcherServlet(ServletContext servletContext) {
+		// 获取 DispatcherServlet 名字
 		String servletName = getServletName();
 		Assert.hasLength(servletName, "getServletName() must not return null or empty");
 
+		// 创建子容器，抽象方法留给子类实现去创建
 		WebApplicationContext servletAppContext = createServletApplicationContext();
 		Assert.notNull(servletAppContext, "createServletApplicationContext() must not return null");
 
+		// 创建 DispatcherServlet 并将子容器传递进去
 		FrameworkServlet dispatcherServlet = createDispatcherServlet(servletAppContext);
 		Assert.notNull(dispatcherServlet, "createDispatcherServlet(WebApplicationContext) must not return null");
+
+		// 留给子类扩展，可以实现一些 ApplicationContextInitializer 接口，来监听子容器初始化前回调
 		dispatcherServlet.setContextInitializers(getServletApplicationContextInitializers());
 
+		// 将 DispatcherServlet 添加到 Servlet 容器
 		ServletRegistration.Dynamic registration = servletContext.addServlet(servletName, dispatcherServlet);
 		if (registration == null) {
 			throw new IllegalStateException("Failed to register servlet with name '" + servletName + "'. " +
@@ -93,16 +101,20 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 		}
 
 		registration.setLoadOnStartup(1);
+		// 添加 DispatcherServlet 路径映射
 		registration.addMapping(getServletMappings());
+		// 设置是否支持异步操作
 		registration.setAsyncSupported(isAsyncSupported());
 
+		// 获取所有的过滤器，留给子类实现的
 		Filter[] filters = getServletFilters();
 		if (!ObjectUtils.isEmpty(filters)) {
 			for (Filter filter : filters) {
+				// 注册监听器到 Servlet 容器
 				registerServletFilter(servletContext, filter);
 			}
 		}
-
+		// 留给子类实现的可以对注册的 DispatcherServlet 进行一些配置修改
 		customizeRegistration(registration);
 	}
 
