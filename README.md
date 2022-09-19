@@ -4,4 +4,5 @@
 - [Bean的创建过程](https://www.dekux.com/Java/Spring/70c03259.htm)
 - [Spring循环依赖](https://www.dekux.com/Java/Spring/891792bb.html)
 - [Spring-AOP原理](https://www.dekux.com/Java/Spring/ef52348b.html)
+- [事务实现原理](https://www.dekux.com/Java/Spring/a49d5ea8.html)
 
