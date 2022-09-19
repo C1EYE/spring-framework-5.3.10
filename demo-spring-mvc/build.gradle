@@ -1,5 +1,5 @@
 plugins {
-    id 'java'
+    id 'war'
 }
 
 group 'org.springframework'
@@ -10,6 +10,7 @@ repositories {
 }
 
 dependencies {
+    compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
     implementation(project(":spring-web"))
     implementation(project(":spring-webmvc"))
     implementation(project(":spring-instrument"))
