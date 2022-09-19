@@ -38,7 +38,7 @@ public class MyWebAppInitializer extends AbstractAnnotationConfigDispatcherServl
 	}
 
 	/**
-	 * 父容器初始化前的回调
+	 * 父容器刷新前的回调
 	 */
 	@Override
 	protected ApplicationContextInitializer<?>[] getRootApplicationContextInitializers() {
