@@ -121,6 +121,7 @@ public class StandardServletMultipartResolver implements MultipartResolver {
 
 	@Override
 	public MultipartHttpServletRequest resolveMultipart(HttpServletRequest request) throws MultipartException {
+		// 对 HttpServletRequest 进行一层包装
 		return new StandardMultipartHttpServletRequest(request, this.resolveLazily);
 	}
 

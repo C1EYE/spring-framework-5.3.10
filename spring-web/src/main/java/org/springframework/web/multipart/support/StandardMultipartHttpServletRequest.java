@@ -84,6 +84,7 @@ public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpSe
 			throws MultipartException {
 
 		super(request);
+		// 判断是否立即解析文件，默认为立即解析
 		if (!lazyParsing) {
 			parseRequest(request);
 		}
@@ -92,17 +93,20 @@ public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpSe
 
 	private void parseRequest(HttpServletRequest request) {
 		try {
+			// 获取文件对象，和临时存放目录，一个Part对应一个上传的文件
 			Collection<Part> parts = request.getParts();
 			this.multipartParameterNames = new LinkedHashSet<>(parts.size());
 			MultiValueMap<String, MultipartFile> files = new LinkedMultiValueMap<>(parts.size());
 			for (Part part : parts) {
 				String headerValue = part.getHeader(HttpHeaders.CONTENT_DISPOSITION);
 				ContentDisposition disposition = ContentDisposition.parse(headerValue);
+				// 获取原始文件名字
 				String filename = disposition.getFilename();
 				if (filename != null) {
 					if (filename.startsWith("=?") && filename.endsWith("?=")) {
 						filename = MimeDelegate.decode(filename);
 					}
+					// 将文件包装成为 MultipartFile 文件类型
 					files.add(part.getName(), new StandardMultipartFile(part, filename));
 				}
 				else {
@@ -118,6 +122,7 @@ public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpSe
 
 	protected void handleParseFailure(Throwable ex) {
 		String msg = ex.getMessage();
+		// 判断错误信息是否有 size 字段和 exceed 字段，如果有的话抛出文件大小超限异常
 		if (msg != null && msg.contains("size") && msg.contains("exceed")) {
 			throw new MaxUploadSizeExceededException(-1, ex);
 		}

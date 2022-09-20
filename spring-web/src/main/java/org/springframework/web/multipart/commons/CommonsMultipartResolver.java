@@ -164,9 +164,11 @@ public class CommonsMultipartResolver extends CommonsFileUploadSupport
 	@Override
 	public MultipartHttpServletRequest resolveMultipart(final HttpServletRequest request) throws MultipartException {
 		Assert.notNull(request, "Request must not be null");
+		// 判断是否延迟解析，默认false，则立即解析
 		if (this.resolveLazily) {
 			return new DefaultMultipartHttpServletRequest(request) {
 				@Override
+				// 先创建对象返回不解析文件，等调用这个方法才来解析
 				protected void initializeMultipart() {
 					MultipartParsingResult parsingResult = parseRequest(request);
 					setMultipartFiles(parsingResult.getMultipartFiles());
@@ -176,7 +178,9 @@ public class CommonsMultipartResolver extends CommonsFileUploadSupport
 			};
 		}
 		else {
+			// 立即解析文件以及表单参数
 			MultipartParsingResult parsingResult = parseRequest(request);
+			// 将文件以及request 封装成MultipartHttpServletRequest
 			return new DefaultMultipartHttpServletRequest(request, parsingResult.getMultipartFiles(),
 					parsingResult.getMultipartParameters(), parsingResult.getMultipartParameterContentTypes());
 		}
@@ -189,10 +193,13 @@ public class CommonsMultipartResolver extends CommonsFileUploadSupport
 	 * @throws MultipartException if multipart resolution failed.
 	 */
 	protected MultipartParsingResult parseRequest(HttpServletRequest request) throws MultipartException {
+		// 获取文件编码
 		String encoding = determineEncoding(request);
 		FileUpload fileUpload = prepareFileUpload(encoding);
 		try {
+			// 获取上传的临时文件对象
 			List<FileItem> fileItems = ((ServletFileUpload) fileUpload).parseRequest(request);
+			// 解析包装成为 MultipartFile 文件对象
 			return parseFileItems(fileItems, encoding);
 		}
 		catch (FileUploadBase.SizeLimitExceededException ex) {

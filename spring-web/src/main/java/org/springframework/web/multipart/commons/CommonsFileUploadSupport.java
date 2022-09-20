@@ -253,6 +253,7 @@ public abstract class CommonsFileUploadSupport {
 
 		// Extract multipart files and multipart parameters.
 		for (FileItem fileItem : fileItems) {
+			// 判断是不是一个简单的表单字段，而非文件对象
 			if (fileItem.isFormField()) {
 				String value;
 				String partEncoding = determineEncoding(fileItem.getContentType(), encoding);
@@ -279,7 +280,7 @@ public abstract class CommonsFileUploadSupport {
 				multipartParameterContentTypes.put(fileItem.getFieldName(), fileItem.getContentType());
 			}
 			else {
-				// multipart file field
+				// 处理文件
 				CommonsMultipartFile file = createMultipartFile(fileItem);
 				multipartFiles.add(file.getName(), file);
 				LogFormatUtils.traceDebug(logger, traceOn ->

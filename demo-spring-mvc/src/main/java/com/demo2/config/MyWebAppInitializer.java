@@ -4,6 +4,7 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
+import javax.servlet.MultipartConfigElement;
 import javax.servlet.ServletRegistration;
 
 /**
@@ -63,5 +64,9 @@ public class MyWebAppInitializer  extends AbstractAnnotationConfigDispatcherServ
 	@Override
 	protected void customizeRegistration(@NonNull ServletRegistration.Dynamic registration) {
 		System.out.println(registration);
+		MultipartConfigElement multipartConfigElement = new MultipartConfigElement("C:\\Users\\rexxyuan\\.tem");
+		registration.setMultipartConfig(multipartConfigElement);
 	}
+
+
 }

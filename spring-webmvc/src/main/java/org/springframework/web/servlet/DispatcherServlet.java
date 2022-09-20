@@ -1077,6 +1077,7 @@ public class DispatcherServlet extends FrameworkServlet {
 				// 获取处理器链（即控制器+拦截器）
 				mappedHandler = getHandler(processedRequest);
 				if (mappedHandler == null) {
+					// 如果没有找到对应的处理器链对象，则进入404错误处理流程
 					noHandlerFound(processedRequest, response);
 					return;
 				}
@@ -1220,15 +1221,19 @@ public class DispatcherServlet extends FrameworkServlet {
 	protected HttpServletRequest checkMultipart(HttpServletRequest request) throws MultipartException {
 		// 检查是否有文件上传解析器，并且调用 isMultipart 方法检查这个请求是否是一个文件上传请求
 		if (this.multipartResolver != null && this.multipartResolver.isMultipart(request)) {
+			// 判断 request 请求对象是否已经解析成为一个 MultipartHttpServletRequest
 			if (WebUtils.getNativeRequest(request, MultipartHttpServletRequest.class) != null) {
 				if (DispatcherType.REQUEST.equals(request.getDispatcherType())) {
 					logger.trace("Request already resolved to MultipartHttpServletRequest, e.g. by MultipartFilter");
 				}
+				// 判断先前是否有解析失败过
 			} else if (hasMultipartException(request)) {
 				logger.debug("Multipart resolution previously failed for current request - " +
 						"skipping re-resolution for undisturbed error rendering");
 			} else {
 				try {
+					// 将 request 解析成为 MultipartHttpServletRequest
+					// 会将上传的文件对象封装成 MultipartFile，保存到 MultipartHttpServletRequest 成功变量上
 					return this.multipartResolver.resolveMultipart(request);
 				} catch (MultipartException ex) {
 					if (request.getAttribute(WebUtils.ERROR_EXCEPTION_ATTRIBUTE) != null) {
@@ -1240,7 +1245,7 @@ public class DispatcherServlet extends FrameworkServlet {
 				}
 			}
 		}
-		// If not returned before: return original request.
+		// 如果不是一个文件上传请求或无法处理文件上传，那么返回原始的
 		return request;
 	}
 
