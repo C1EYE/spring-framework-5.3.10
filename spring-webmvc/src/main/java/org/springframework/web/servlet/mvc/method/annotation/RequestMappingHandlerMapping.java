@@ -393,7 +393,9 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 
 	@Override
 	protected void registerHandlerMethod(Object handler, Method method, RequestMappingInfo mapping) {
+		// 注册保存起来请求方法
 		super.registerHandlerMethod(handler, method, mapping);
+		// 解析参数 @RequestBody 注解
 		updateConsumesCondition(mapping, method);
 	}
 

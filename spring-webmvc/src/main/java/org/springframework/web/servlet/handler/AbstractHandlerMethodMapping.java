@@ -252,7 +252,8 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		}
 		// 判断类上是否有 @Controller 或 @RequestMapping 注解
 		if (beanType != null && isHandler(beanType)) {
-			//
+			// 解析 beanName 所有被 @RequestMapping 修饰的方法
+			// 然后注册到 mappingRegistry 里面保存，待后面匹配使用
 			detectHandlerMethods(beanName);
 		}
 	}
