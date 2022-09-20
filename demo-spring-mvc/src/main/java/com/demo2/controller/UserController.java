@@ -2,7 +2,6 @@ package com.demo2.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,7 +20,7 @@ public class UserController {
 		return "m1";
 	}
 
-	@PostMapping("/m2")
+
 	public void m2(MultipartFile file){
 		System.out.println(file.getName());
 		System.out.println(file.getSize());
