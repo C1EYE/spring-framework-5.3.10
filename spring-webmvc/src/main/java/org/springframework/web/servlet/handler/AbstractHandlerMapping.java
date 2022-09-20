@@ -576,6 +576,7 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 			return UrlPathHelper.defaultInstance.removeSemicolonContent(lookupPath);
 		}
 		else {
+			// 解析请求路径
 			return getUrlPathHelper().resolveAndCacheLookupPath(request);
 		}
 	}

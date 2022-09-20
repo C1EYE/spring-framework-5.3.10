@@ -152,6 +152,9 @@ public class CommonsMultipartResolver extends CommonsFileUploadSupport
 
 	@Override
 	public boolean isMultipart(HttpServletRequest request) {
+		// 先判断你有没有设置 supportedMethods，即可以自定义支持那些请求方法支持文件上传
+		// 如果你没设置 supportedMethods 的话，只能默认支持 POST 请求
+		// 然后判断你的请求类型 contentType 是否以 multipart/ 开头
 		return (this.supportedMethods != null ?
 				this.supportedMethods.contains(request.getMethod()) &&
 						FileUploadBase.isMultipartContent(new ServletRequestContext(request)) :

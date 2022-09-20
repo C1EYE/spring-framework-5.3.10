@@ -113,6 +113,8 @@ public class StandardServletMultipartResolver implements MultipartResolver {
 
 	@Override
 	public boolean isMultipart(HttpServletRequest request) {
+		// 如果 strictServletCompliance = false，那么就判断请求类型是否以 multipart/ 开头
+		// 如果 strictServletCompliance = true, 那么就是判断请求类型是否以 multipart/form-data 开头
 		return StringUtils.startsWithIgnoreCase(request.getContentType(),
 				(this.strictServletCompliance ? MediaType.MULTIPART_FORM_DATA_VALUE : "multipart/"));
 	}

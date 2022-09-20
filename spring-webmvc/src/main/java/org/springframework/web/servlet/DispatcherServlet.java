@@ -956,8 +956,8 @@ public class DispatcherServlet extends FrameworkServlet {
 	protected void doService(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		logRequest(request);
 
-		// Keep a snapshot of the request attributes in case of an include,
-		// to be able to restore the original attributes after the include.
+		// 判断当前请求是不是一个 include  请求
+		// 如果是的话将当前属性做一个快照备份
 		Map<String, Object> attributesSnapshot = null;
 		if (WebUtils.isIncludeRequest(request)) {
 			attributesSnapshot = new HashMap<>();
@@ -992,10 +992,11 @@ public class DispatcherServlet extends FrameworkServlet {
 		}
 
 		try {
+			// 处理请求
 			doDispatch(request, response);
 		} finally {
 			if (!WebAsyncUtils.getAsyncManager(request).isConcurrentHandlingStarted()) {
-				// Restore the original attribute snapshot, in case of an include.
+				// 恢复属性快照备份
 				if (attributesSnapshot != null) {
 					restoreAttributesAfterInclude(request, attributesSnapshot);
 				}
@@ -1055,20 +1056,25 @@ public class DispatcherServlet extends FrameworkServlet {
 	@SuppressWarnings("deprecation")
 	protected void doDispatch(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		HttpServletRequest processedRequest = request;
+		// 处理器链包括我们的写的控制器以及拦截器
 		HandlerExecutionChain mappedHandler = null;
+		// 表示是否是文件上传请求的标记
 		boolean multipartRequestParsed = false;
 
 		WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
 
 		try {
 			ModelAndView mv = null;
+			// 表示请求处理过程中所抛出的异常，这个异常不包括渲染过程抛出的异常
 			Exception dispatchException = null;
 
 			try {
+				// 首先检查是不是文件上传请求，如果是，则对当前 request 重新进行包装，如果不是，则返回原对象
 				processedRequest = checkMultipart(request);
+				// 通过和原对象比对判断是不是文件上传请求，如果两个对象不一样了，说明是文件上传请求
 				multipartRequestParsed = (processedRequest != request);
 
-				// Determine handler for the current request.
+				// 获取处理器链（即控制器+拦截器）
 				mappedHandler = getHandler(processedRequest);
 				if (mappedHandler == null) {
 					noHandlerFound(processedRequest, response);
@@ -1212,6 +1218,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * @see MultipartResolver#resolveMultipart
 	 */
 	protected HttpServletRequest checkMultipart(HttpServletRequest request) throws MultipartException {
+		// 检查是否有文件上传解析器，并且调用 isMultipart 方法检查这个请求是否是一个文件上传请求
 		if (this.multipartResolver != null && this.multipartResolver.isMultipart(request)) {
 			if (WebUtils.getNativeRequest(request, MultipartHttpServletRequest.class) != null) {
 				if (DispatcherType.REQUEST.equals(request.getDispatcherType())) {
