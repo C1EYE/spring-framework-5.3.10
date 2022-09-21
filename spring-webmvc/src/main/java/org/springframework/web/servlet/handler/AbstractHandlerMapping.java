@@ -496,14 +496,12 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 		if (handler == null) {
 			return null;
 		}
-		// handler 有可能是一个 beanName
-		// 根据 beanName 去容器找到对应的 Bean
+
 		if (handler instanceof String) {
 			String handlerName = (String) handler;
 			handler = obtainApplicationContext().getBean(handlerName);
 		}
 
-		// Ensure presence of cached lookupPath for interceptors and others
 		if (!ServletRequestPathUtils.hasCachedPath(request)) {
 			initLookupPath(request);
 		}

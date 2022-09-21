@@ -209,6 +209,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		// 获取容器内所有的 beanName
 		for (String beanName : getCandidateBeanNames()) {
 			if (!beanName.startsWith(SCOPED_TARGET_NAME_PREFIX)) {
+				// 解析处理 bean
 				processCandidateBean(beanName);
 			}
 		}
@@ -272,7 +273,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		if (handlerType != null) {
 			// 获取原始类型，主要是针对 CGLIB 这种
 			Class<?> userType = ClassUtils.getUserClass(handlerType);
-			// 获取所有 @Request 注解标注的方法
+			// 获取所有 @RequestMapping 注解标注的方法
 			Map<Method, T> methods = MethodIntrospector.selectMethods(userType,
 					(MethodIntrospector.MetadataLookup<T>) method -> {
 						try {
@@ -399,18 +400,25 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	@Nullable
 	protected HandlerMethod lookupHandlerMethod(String lookupPath, HttpServletRequest request) throws Exception {
 		List<Match> matches = new ArrayList<>();
+		// 首先尝试去 pathLookup 集合去寻找精确匹配路径
 		List<T> directPathMatches = this.mappingRegistry.getMappingsByDirectPath(lookupPath);
 		if (directPathMatches != null) {
+			// 路径找到虽然匹配了，但是还要匹配请求方法，以及 @RequestMapping 设置的各种属性
 			addMatchingMappings(directPathMatches, matches, request);
 		}
 		if (matches.isEmpty()) {
+			// 如果精确匹配没找到，那么去 registry 容器去寻找，因为这里保存了模糊匹配，匹配度更广
 			addMatchingMappings(this.mappingRegistry.getRegistrations().keySet(), matches, request);
 		}
 		if (!matches.isEmpty()) {
+			// 先获取第一个为最佳匹配
 			Match bestMatch = matches.get(0);
 			if (matches.size() > 1) {
+				// 如果 matches 大于1 说明找到了多个 /ant? /ant{xxx} /ant*  /ant**
 				Comparator<Match> comparator = new MatchComparator(getMappingComparator(request));
+				// 对找到的多个路径进行排序 ？> {} > * > **
 				matches.sort(comparator);
+				// 排完序以后获取第一个为最佳匹配
 				bestMatch = matches.get(0);
 				if (logger.isTraceEnabled()) {
 					logger.trace(matches.size() + " matching mappings: " + matches);
@@ -443,7 +451,9 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	}
 
 	private void addMatchingMappings(Collection<T> mappings, List<Match> matches, HttpServletRequest request) {
+		// mappings 的方法挨个进行匹配
 		for (T mapping : mappings) {
+			// 对@RequestMapping设置的属性与请求进行匹配
 			T match = getMatchingMapping(mapping, request);
 			if (match != null) {
 				matches.add(new Match(match, this.mappingRegistry.getRegistrations().get(mapping)));
@@ -570,8 +580,16 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 */
 	class MappingRegistry {
 
+		/**
+		 * 存放所有处理器方法
+		 * 例如 /ant /ant? /ant{xxx} /ant* /ant**
+		 */
 		private final Map<T, MappingRegistration<T>> registry = new HashMap<>();
 
+		/**
+		 * 存放精确匹配路径的处理器方法
+		 * 例如 /ant
+		 */
 		private final MultiValueMap<String, T> pathLookup = new LinkedMultiValueMap<>();
 
 		private final Map<String, List<HandlerMethod>> nameLookup = new ConcurrentHashMap<>();
@@ -632,7 +650,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 			try {
 				HandlerMethod handlerMethod = createHandlerMethod(handler, method);
 				validateMethodMapping(handlerMethod, mapping);
-
+				// 查找不是 Ant 风格的路径，意味着精确匹配的路径放置到 pathLookup
 				Set<String> directPaths = AbstractHandlerMethodMapping.this.getDirectPaths(mapping);
 				for (String path : directPaths) {
 					this.pathLookup.add(path, mapping);
@@ -649,7 +667,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 					corsConfig.validateAllowCredentials();
 					this.corsLookup.put(handlerMethod, corsConfig);
 				}
-
+				// 存放所有的路径映射关系
 				this.registry.put(mapping,
 						new MappingRegistration<>(mapping, handlerMethod, directPaths, name, corsConfig != null));
 			}

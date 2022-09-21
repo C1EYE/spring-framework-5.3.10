@@ -28,7 +28,6 @@ public class UserController {
 	}
 
 	@GetMapping("/m1")
-	@ResponseBody
 	public String m1(@RequestParam String name) {
 		System.out.println("UserController m1" + name);
 		return "m1";
