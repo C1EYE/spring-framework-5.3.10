@@ -375,6 +375,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	protected HandlerMethod getHandlerInternal(HttpServletRequest request) throws Exception {
 		// 解析请求路径
 		String lookupPath = initLookupPath(request);
+		// 添加读锁
 		this.mappingRegistry.acquireReadLock();
 		try {
 			// 查找请求路径对应的控制器方法

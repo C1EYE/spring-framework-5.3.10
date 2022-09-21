@@ -16,15 +16,14 @@
 
 package org.springframework.web.servlet.handler;
 
-import java.io.IOException;
+import org.springframework.core.convert.ConversionService;
+import org.springframework.util.Assert;
+import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.core.convert.ConversionService;
-import org.springframework.util.Assert;
-import org.springframework.web.servlet.HandlerInterceptor;
+import java.io.IOException;
 
 /**
  * Interceptor that places the configured {@link ConversionService} in request scope
@@ -55,7 +54,7 @@ public class ConversionServiceExposingInterceptor implements HandlerInterceptor 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws ServletException, IOException {
-
+		// 暴露转换器对象 到 request 域
 		request.setAttribute(ConversionService.class.getName(), this.conversionService);
 		return true;
 	}

@@ -16,13 +16,6 @@
 
 package org.springframework.web.multipart.support;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.Part;
-
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ResolvableType;
 import org.springframework.lang.Nullable;
@@ -31,6 +24,12 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.multipart.MultipartRequest;
 import org.springframework.web.util.WebUtils;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * A common delegate for {@code HandlerMethodArgumentResolver} implementations
@@ -97,7 +96,7 @@ public final class MultipartResolutionDelegate {
 		MultipartHttpServletRequest multipartRequest =
 				WebUtils.getNativeRequest(request, MultipartHttpServletRequest.class);
 		boolean isMultipart = (multipartRequest != null || isMultipartContent(request));
-
+		// 处理单个 MultipartFile
 		if (MultipartFile.class == parameter.getNestedParameterType()) {
 			if (!isMultipart) {
 				return null;
@@ -107,6 +106,7 @@ public final class MultipartResolutionDelegate {
 			}
 			return multipartRequest.getFile(name);
 		}
+		// 处理集合类型多个 MultipartFile
 		else if (isMultipartFileCollection(parameter)) {
 			if (!isMultipart) {
 				return null;
@@ -117,6 +117,7 @@ public final class MultipartResolutionDelegate {
 			List<MultipartFile> files = multipartRequest.getFiles(name);
 			return (!files.isEmpty() ? files : null);
 		}
+		// 处理数组类型多个 MultipartFile
 		else if (isMultipartFileArray(parameter)) {
 			if (!isMultipart) {
 				return null;
@@ -127,6 +128,7 @@ public final class MultipartResolutionDelegate {
 			List<MultipartFile> files = multipartRequest.getFiles(name);
 			return (!files.isEmpty() ? files.toArray(new MultipartFile[0]) : null);
 		}
+		// 处理文件对象类型 Part
 		else if (Part.class == parameter.getNestedParameterType()) {
 			if (!isMultipart) {
 				return null;
@@ -148,6 +150,7 @@ public final class MultipartResolutionDelegate {
 			return (!parts.isEmpty() ? parts.toArray(new Part[0]) : null);
 		}
 		else {
+			// 非文件类型
 			return UNRESOLVABLE;
 		}
 	}

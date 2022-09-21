@@ -16,19 +16,17 @@
 
 package org.springframework.web.servlet;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.lang.Nullable;
+import org.springframework.util.CollectionUtils;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.springframework.lang.Nullable;
-import org.springframework.util.CollectionUtils;
 
 /**
  * Handler execution chain, consisting of handler object and any handler interceptors.
@@ -146,6 +144,7 @@ public class HandlerExecutionChain {
 		for (int i = 0; i < this.interceptorList.size(); i++) {
 			HandlerInterceptor interceptor = this.interceptorList.get(i);
 			if (!interceptor.preHandle(request, response, this.handler)) {
+				// 如果有执行失败的，它会为执行过 preHandle 的拦截器，执行 afterCompletion 方法
 				triggerAfterCompletion(request, response, null);
 				return false;
 			}

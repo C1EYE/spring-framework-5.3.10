@@ -1,9 +1,15 @@
 package com.demo2.controller;
 
+import com.demo2.model.User;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @author Yuan
@@ -14,15 +20,36 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping
 public class UserController {
 
+	@InitBinder
+	public void initBinder2(WebDataBinder binder) {
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		dateFormat.setLenient(false);
+		binder.registerCustomEditor(Date.class, new CustomDateEditor(dateFormat, false));
+	}
+
 	@GetMapping("/m1")
-	public String m1(){
-		System.out.println("UserController m1");
+	@ResponseBody
+	public String m1(@RequestParam String name) {
+		System.out.println("UserController m1" + name);
 		return "m1";
 	}
 
+	@PostMapping("/m2")
+	@ResponseBody
+	public User m2(@RequestBody @Validated User user) {
+		System.out.println("UserController m2" + user);
+		return user;
+	}
 
-	public void m2(MultipartFile file){
-		System.out.println(file.getName());
-		System.out.println(file.getSize());
+	@PutMapping("/m3/{name}")
+	public String m3(@PathVariable("name") String name) {
+		System.out.println("UserController m3" + name);
+		return "m3";
+	}
+
+	@PostMapping("/m4")
+	public String m4(MultipartFile[] files){
+		System.out.println("UserController m3" + files);
+		return "m4";
 	}
 }

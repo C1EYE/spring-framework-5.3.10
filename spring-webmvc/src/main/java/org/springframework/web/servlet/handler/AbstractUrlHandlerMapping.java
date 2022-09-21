@@ -520,6 +520,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 
 		@Override
 		public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+			// 暴露url路径 和 处理器到 request 域
 			exposePathWithinMapping(this.bestMatchingPattern, this.pathWithinMapping, request);
 			request.setAttribute(BEST_MATCHING_HANDLER_ATTRIBUTE, handler);
 			request.setAttribute(INTROSPECT_TYPE_LEVEL_MAPPING, supportsTypeLevelMappings());
@@ -543,6 +544,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 
 		@Override
 		public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+			// 暴露路径模板变量映射到 request  域
 			exposeUriTemplateVariables(this.uriTemplateVariables, request);
 			return true;
 		}
